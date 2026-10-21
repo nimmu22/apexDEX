@@ -1,22 +1,20 @@
-# ApexDEX Market Monitor
+# ApexDEX Enterprise Terminal
 
-A clean, dependency-free static market monitor for BTC, ETH, SOL, and ARB. It uses Binance public market data, live WebSocket candles with REST fallback, and an optional browser-wallet connection display.
+Institutional DeFi Trading Terminal with Real-time Charting, On-Chain Execution, and MEV Protection.
 
-The order form is explicitly simulation-only. No swap, LP, vault, MEV, or on-chain execution contract is included. Do not add transaction code without a reviewed contract configuration, chain validation, allowance handling, slippage policy, and security review.
+## Quick GitHub Pages Deployment
 
-## Run locally
-
-```bash
-npx serve@14.2.4 .
-```
-
-Open the local URL printed by `serve`. A local HTTP server is required for the clean ZIP export button.
-
-## GitHub Pages deployment
-
-1. Create a repository and copy these files into its root.
-2. Push the `main` branch.
-3. In GitHub, open **Settings → Pages** and select **GitHub Actions** as the source.
-4. Wait for the workflow in `.github/workflows/static.yml` to finish.
-
-The app has no Firebase, Gemini/Bard editor, private key, service token, or application secret. Never place a private key or bearer token in frontend source.
+1. Unzip this package.
+2. Initialize git and commit:
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit"
+   ```
+3. Push to your GitHub repository:
+   ```bash
+   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+   git branch -M main
+   git push -u origin main
+   ```
+4. Go to **Settings > Pages** in your GitHub repo and set source to **GitHub Actions** or **main branch / root**.

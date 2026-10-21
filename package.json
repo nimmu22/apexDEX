@@ -1,12 +1,9 @@
 {
-  "name": "apexdex-market-monitor",
-  "version": "2.0.0",
-  "private": true,
-  "description": "Dependency-free ApexDEX market monitor demo",
+  "name": "apexdex-terminal",
+  "version": "1.0.0",
+  "description": "Institutional DeFi Terminal",
+  "main": "index.html",
   "scripts": {
-    "start": "npx serve@14.2.4 ."
-  },
-  "engines": {
-    "node": ">=18"
+    "start": "npx serve ."
   }
 }
