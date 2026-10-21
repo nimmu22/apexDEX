@@ -1,0 +1,12 @@
+{
+  "name": "apexdex-market-monitor",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Dependency-free ApexDEX market monitor demo",
+  "scripts": {
+    "start": "npx serve@14.2.4 ."
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

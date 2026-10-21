@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ApexDEX market monitor and trading interface demo.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.binance.com wss://stream.binance.com:9443; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'">
+  <title>ApexDEX Market Monitor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#terminal" data-tab="terminal" aria-label="ApexDEX home">
+      <span class="brand-mark">A</span>
+      <span>APEX<span class="accent">DEX</span></span>
+      <span class="badge">MARKET MONITOR</span>
+    </a>
+    <nav class="nav" aria-label="Primary navigation">
+      <button class="nav-btn active" data-tab="terminal" type="button">Trade monitor</button>
+      <button class="nav-btn" data-tab="swap" type="button">Swap</button>
+      <button class="nav-btn" data-tab="mev" type="button">MEV</button>
+      <button class="nav-btn" data-tab="pools" type="button">LP pools</button>
+      <button class="nav-btn" data-tab="security" type="button">Vault</button>
+    </nav>
+    <div class="top-actions">
+      <span id="connectionStatus" class="connection-status">Market: connecting…</span>
+      <button id="walletBtn" class="button button-primary" type="button">Connect wallet</button>
+    </div>
+  </header>
+
+  <section class="tickerbar" aria-label="Market summary">
+    <label class="field-inline">Asset
+      <select id="pairSelect">
+        <option value="BTC-USD">BTC / USD</option>
+        <option value="ETH-USD">ETH / USD</option>
+        <option value="SOL-USD">SOL / USD</option>
+        <option value="ARB-USD">ARB / USD</option>
+      </select>
+    </label>
+    <strong id="tickerPrice">—</strong>
+    <span id="tickerChange" class="positive">—</span>
+    <span>24h high <b id="tickerHigh">—</b></span>
+    <span>24h low <b id="tickerLow">—</b></span>
+    <span>24h volume <b id="tickerVol">—</b></span>
+  </section>
+
+  <main class="page-shell">
+    <section id="module-terminal" class="tab-module" aria-labelledby="terminal-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Read-only market data</p>
+          <h1 id="terminal-title">Trading monitor</h1>
+        </div>
+        <span id="streamStatus" class="status-pill">Starting stream…</span>
+      </div>
+
+      <div class="dashboard-grid">
+        <aside class="tool-panel panel" aria-label="Chart tools">
+          <h2>Tools</h2>
+          <button class="tool-btn active" data-tool="crosshair" type="button">Crosshair</button>
+          <button class="tool-btn" data-tool="trendline" type="button">Trendline</button>
+          <p id="toolStatus" class="muted">Crosshair selected.</p>
+        </aside>
+
+        <section class="chart-panel panel" aria-labelledby="chart-title">
+          <div class="panel-heading">
+            <div>
+              <h2 id="chart-title">BINANCE:BTCUSDT</h2>
+              <span id="chartSubtitle" class="muted">1m candles · live stream</span>
+            </div>
+            <div class="timeframes" role="group" aria-label="Chart timeframe">
+              <button class="timeframe active" data-timeframe="1m" type="button">1m</button>
+              <button class="timeframe" data-timeframe="5m" type="button">5m</button>
+              <button class="timeframe" data-timeframe="15m" type="button">15m</button>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="priceChart" aria-label="Candlestick chart"></canvas>
+            <p id="chartMessage" class="chart-message">Loading market data…</p>
+          </div>
+        </section>
+
+        <aside class="side-column">
+          <section class="panel order-panel" aria-labelledby="order-title">
+            <div class="panel-heading">
+              <h2 id="order-title">Order simulator</h2>
+              <span class="demo-badge">DEMO ONLY</span>
+            </div>
+            <p class="muted">No contract or transaction is configured. This form never sends funds.</p>
+            <div class="segmented" role="group" aria-label="Order side">
+              <button id="btnOrderBuy" class="selected" data-side="buy" type="button">Buy / Long</button>
+              <button id="btnOrderSell" data-side="sell" type="button">Sell / Short</button>
+            </div>
+            <label class="field">Margin (USDC)
+              <input id="marginInput" type="number" min="0.01" step="0.01" value="100" inputmode="decimal">
+            </label>
+            <button id="orderBtn" class="button button-success" type="button">Simulate market long</button>
+            <p id="orderStatus" class="status-message" role="status"></p>
+          </section>
+
+          <section class="panel export-panel" aria-labelledby="export-title">
+            <h2 id="export-title">Deployment bundle</h2>
+            <p class="muted">Download the clean source package and GitHub Pages workflow.</p>
+            <button id="exportBtn" class="button button-secondary" type="button">Download clean ZIP</button>
+            <p id="exportStatus" class="status-message" role="status"></p>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <section id="module-swap" class="tab-module hidden" aria-labelledby="swap-title">
+      <div class="empty-module panel"><p class="eyebrow">Not configured</p><h1 id="swap-title">Swap</h1><p>This module is intentionally disabled until a reviewed router contract, token allowlist, slippage policy, and transaction flow are configured.</p></div>
+    </section>
+    <section id="module-mev" class="tab-module hidden" aria-labelledby="mev-title">
+      <div class="empty-module panel"><p class="eyebrow">Not configured</p><h1 id="mev-title">MEV protection</h1><p>No private relay or execution strategy is connected. Do not treat this interface as MEV-protected.</p></div>
+    </section>
+    <section id="module-pools" class="tab-module hidden" aria-labelledby="pools-title">
+      <div class="empty-module panel"><p class="eyebrow">Not configured</p><h1 id="pools-title">LP pools</h1><p>Pool data and position management are unavailable until a trusted indexer and contract configuration are added.</p></div>
+    </section>
+    <section id="module-security" class="tab-module hidden" aria-labelledby="security-title">
+      <div class="empty-module panel"><p class="eyebrow">Not configured</p><h1 id="security-title">Vault</h1><p>There is no vault contract or security scanner connected. No assets are held by this site.</p></div>
+    </section>
+  </main>
+
+  <footer class="footer">ApexDEX is a market-data demo. Verify every contract, token, chain, and transaction independently.</footer>
+  <script src="app.js"></script>
+</body>
+</html>
