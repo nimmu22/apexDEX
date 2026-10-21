@@ -122,6 +122,117 @@
         input[type="range"] {
             accent-color: #06B6D4;
         }
+
+        /* TOP-100 COIN EXPLORER */
+        .coin-explorer {
+            position: relative;
+            z-index: 5;
+        }
+        .coin-category-btn.active,
+        .coin-view-btn.active {
+            color: #020617;
+            background: #06B6D4;
+            font-weight: 800;
+        }
+        .coin-category-btn,
+        .coin-view-btn {
+            transition: all .18s ease;
+        }
+        .coin-category-btn:hover,
+        .coin-view-btn:hover {
+            color: #fff;
+            background: rgba(6, 182, 212, .18);
+        }
+        .coin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: .6rem;
+            max-height: 390px;
+            overflow-y: auto;
+            padding-right: .2rem;
+        }
+        .coin-card {
+            border: 1px solid rgba(255,255,255,.08);
+            background: rgba(7,12,26,.72);
+            transition: border-color .18s ease, transform .18s ease, background .18s ease;
+        }
+        .coin-card:hover {
+            border-color: rgba(6,182,212,.65);
+            background: rgba(6,182,212,.08);
+            transform: translateY(-1px);
+        }
+        .coin-card.watchlisted {
+            border-color: rgba(245,158,11,.48);
+        }
+        .coin-symbol {
+            color: #f8fafc;
+            font-weight: 800;
+            letter-spacing: .02em;
+        }
+        .coin-rank {
+            color: #64748b;
+            font: 10px ui-monospace, SFMono-Regular, monospace;
+        }
+        .coin-category {
+            color: #67e8f9;
+            background: rgba(6,182,212,.10);
+            border: 1px solid rgba(6,182,212,.25);
+        }
+        .coin-category.meme { color: #fbbf24; background: rgba(245,158,11,.10); border-color: rgba(245,158,11,.25); }
+        .coin-category.ai { color: #c4b5fd; background: rgba(139,92,246,.12); border-color: rgba(139,92,246,.28); }
+        .coin-category.rwa { color: #86efac; background: rgba(34,197,94,.10); border-color: rgba(34,197,94,.25); }
+        .coin-category.stablecoin { color: #93c5fd; background: rgba(59,130,246,.10); border-color: rgba(59,130,246,.25); }
+        .coin-watch-btn { color: #64748b; }
+        .coin-watch-btn.watchlisted { color: #f59e0b; }
+        .coin-trade-btn:disabled { cursor: not-allowed; opacity: .45; }
+        .coin-empty {
+            grid-column: 1 / -1;
+            padding: 1.75rem;
+            color: #94a3b8;
+            text-align: center;
+        }
+
+        /* Compact market dropdown modeled on the reference trading terminal. */
+        .market-tab {
+            color: #94a3b8;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            transition: color .18s ease, border-color .18s ease;
+        }
+        .market-tab:hover,
+        .market-tab.active {
+            color: #f8fafc;
+            border-bottom-color: #06b6d4;
+        }
+        .market-tab.active {
+            font-weight: 800;
+        }
+        .market-row {
+            min-height: 38px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            transition: background .16s ease;
+        }
+        .market-row:hover,
+        .market-row.current {
+            background: rgba(6,182,212,.10);
+        }
+        .market-row .market-symbol {
+            color: #f8fafc;
+            font-weight: 800;
+            letter-spacing: .02em;
+        }
+        .market-row .market-star {
+            color: #64748b;
+        }
+        .market-row .market-star.watchlisted {
+            color: #f59e0b;
+        }
+        .market-recents-label {
+            color: #64748b;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col bg-cyber-950 text-slate-100 selection:bg-cyber-cyan selection:text-cyber-950">
@@ -169,13 +280,6 @@
                     <i data-lucide="volume-2" class="w-3.5 h-3.5 text-cyber-cyan"></i>
                     <span id="audioToggleText">SFX: ON</span>
                 </button>
-
-                <!-- CLEAN DOWNLOAD ZIP BUTTON -->
-                <button onclick="downloadProjectZip()" class="bg-gradient-to-r from-amber-500 to-cyber-gold hover:opacity-90 text-cyber-950 font-bold text-xs px-3 py-1.5 rounded-lg shadow-lg shadow-amber-500/20 transition flex items-center gap-1.5 font-mono">
-                    <i data-lucide="archive" class="w-3.5 h-3.5"></i>
-                    <span>Download Project .ZIP</span>
-                </button>
-
                 <!-- NETWORK STATUS / ARBITRUM SWITCHER -->
                 <button id="networkBadgeBtn" onclick="verifyOrSwitchNetwork()" title="Click to verify Arbitrum One network (Chain ID: 42161)" class="hidden sm:flex items-center gap-2 text-[11px] font-mono glass-panel px-2.5 py-1.5 rounded-lg border border-white/10 hover:border-cyber-cyan/40 text-slate-300 transition">
                     <span id="networkDot" class="w-2 h-2 rounded-full bg-cyber-green pulse-live"></span>
@@ -212,17 +316,42 @@
     </header>
 
     <!-- REAL-TIME MARKET TICKER & ACCOUNT MARGIN TELEMETRY RIBBON -->
-    <section class="border-b border-white/10 bg-cyber-900/90 text-xs font-mono py-1.5 px-3 lg:px-4 overflow-x-auto">
+    <section class="border-b border-white/10 bg-cyber-900/90 text-xs font-mono py-1.5 px-3 lg:px-4 overflow-visible">
         <div class="max-w-[1920px] mx-auto flex items-center justify-between gap-6 whitespace-nowrap">
             <div class="flex items-center gap-4 lg:gap-5">
                 <div class="flex items-center gap-2">
                     <span class="text-slate-400 text-[11px] uppercase tracking-wider">Asset</span>
-                    <select id="pairSelect" onchange="switchPair(this.value)" class="bg-cyber-950 text-white font-bold border border-white/10 rounded px-2.5 py-1 text-xs focus:outline-none hover:border-cyber-cyan cursor-pointer">
+                    <div id="marketSelector" class="relative">
+                    <button id="pairMenuTrigger" type="button" onclick="toggleMarketMenu()" class="bg-cyber-950 text-white font-bold border border-white/10 rounded px-2.5 py-1 text-xs focus:outline-none hover:border-cyber-cyan cursor-pointer flex items-center gap-1.5 min-w-[112px] justify-between">
+                        <span id="pairMenuSymbol">BTC</span><span class="text-slate-500">50x</span><span id="pairMenuChevron" class="text-slate-400">⌄</span>
+                    </button>
+                    <select id="pairSelect" onchange="switchPair(this.value)" class="hidden" aria-hidden="true">
                         <option value="BTC-USD" selected>BTC / USD</option>
                         <option value="ETH-USD">ETH / USD</option>
                         <option value="SOL-USD">SOL / USD</option>
                         <option value="ARB-USD">ARB / USD</option>
                     </select>
+                    <button id="watchCurrentBtn" type="button" onclick="toggleCurrentCoinWatch()" title="Add selected coin to watchlist" class="border border-white/10 hover:border-cyber-gold/50 text-slate-400 hover:text-cyber-gold px-2 py-1 rounded text-[11px] font-mono transition">☆ Watch</button>
+                    <div id="marketMenu" class="hidden fixed left-0 top-0 z-[100] w-[min(780px,calc(100vw-1.5rem))] glass-panel border border-white/10 rounded-xl shadow-2xl overflow-hidden text-left">
+                        <div class="p-3 border-b border-white/10">
+                            <div class="flex items-center gap-2">
+                                <div class="relative flex-1">
+                                    <i data-lucide="search" class="w-4 h-4 absolute left-2.5 top-2 text-slate-500"></i>
+                                    <input id="marketSearch" type="search" placeholder="Search markets" class="w-full bg-cyber-950 border border-white/10 rounded-lg pl-8 pr-3 py-2 text-xs text-white focus:outline-none focus:border-cyber-cyan">
+                                </div>
+                                <button id="marketMenuClose" type="button" onclick="closeMarketMenu()" aria-label="Close market selector" title="Close market selector" class="w-8 h-8 shrink-0 rounded-lg border border-white/10 text-slate-400 hover:text-white hover:border-cyber-cyan/50 hover:bg-white/5 text-lg leading-none transition">×</button>
+                            </div>
+                            <div id="marketRecents" class="flex flex-wrap items-center gap-1.5 mt-2"></div>
+                        </div>
+                        <div id="marketPrimaryTabs" class="flex items-center gap-4 px-3 py-2 border-b border-white/10 text-[11px] font-mono overflow-x-auto"></div>
+                        <div id="marketCategoryTabs" class="flex items-center gap-4 px-3 py-2 border-b border-white/10 text-[11px] overflow-x-auto"></div>
+                        <div class="grid grid-cols-[minmax(150px,1fr)_120px_80px_110px] gap-2 px-3 py-2 text-[10px] text-slate-500 uppercase tracking-wider border-b border-white/10 font-mono">
+                            <span>Market</span><span class="text-right">Last Price</span><span class="text-right">24H</span><span class="text-right">Volume</span>
+                        </div>
+                        <div id="marketRows" class="max-h-[390px] overflow-y-auto"></div>
+                        <div class="px-3 py-2 border-t border-white/10 text-[10px] text-slate-500 font-mono">Select a symbol to load its chart. Favorites are saved locally.</div>
+                    </div>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-2 border-l border-white/10 pl-4">
@@ -1091,6 +1220,516 @@
             lpBalances: { 1: 0, 2: 0 }
         };
 
+        // ==================== TOP-100 COIN UNIVERSE & WATCHLIST ====================
+        // This fallback keeps the explorer useful when CoinGecko is rate-limited or unavailable.
+        // When the refresh button succeeds, live market-cap ranking replaces this list.
+        var COIN_CATEGORIES = [
+            { key: 'all', label: 'All' },
+            { key: 'store', label: 'Store of Value' },
+            { key: 'layer1', label: 'Layer 1' },
+            { key: 'layer2', label: 'Layer 2' },
+            { key: 'defi', label: 'DeFi' },
+            { key: 'meme', label: 'Meme' },
+            { key: 'ai', label: 'AI' },
+            { key: 'rwa', label: 'RWA' },
+            { key: 'gaming', label: 'Gaming' },
+            { key: 'stablecoin', label: 'Stablecoin' },
+            { key: 'infra', label: 'Infrastructure' },
+            { key: 'oracle', label: 'Oracle' },
+            { key: 'payments', label: 'Payments' },
+            { key: 'privacy', label: 'Privacy' },
+            { key: 'exchange', label: 'Exchange' }
+        ];
+
+        var TOP_100_SEED = [
+            ['BTC','Bitcoin','store','BTCUSDT'],['ETH','Ethereum','layer1','ETHUSDT'],['USDT','Tether','stablecoin','USDTUSDT'],['BNB','BNB','exchange','BNBUSDT'],['SOL','Solana','layer1','SOLUSDT'],['USDC','USD Coin','stablecoin','USDCUSDT'],['XRP','XRP','payments','XRPUSDT'],['DOGE','Dogecoin','meme','DOGEUSDT'],['ADA','Cardano','layer1','ADAUSDT'],['AVAX','Avalanche','layer1','AVAXUSDT'],
+            ['TRX','TRON','layer1','TRXUSDT'],['LINK','Chainlink','oracle','LINKUSDT'],['TON','Toncoin','layer1','TONUSDT'],['SHIB','Shiba Inu','meme','SHIBUSDT'],['DOT','Polkadot','layer1','DOTUSDT'],['BCH','Bitcoin Cash','payments','BCHUSDT'],['LTC','Litecoin','payments','LTCUSDT'],['UNI','Uniswap','defi','UNIUSDT'],['NEAR','NEAR Protocol','layer1','NEARUSDT'],['DAI','Dai','stablecoin','DAIUSDT'],
+            ['APT','Aptos','layer1','APTUSDT'],['ICP','Internet Computer','layer1','ICPUSDT'],['XMR','Monero','privacy',''],['ETC','Ethereum Classic','layer1','ETCUSDT'],['OKB','OKB','exchange',''],['CRO','Cronos','exchange','CROUSDT'],['ATOM','Cosmos','layer1','ATOMUSDT'],['FIL','Filecoin','infra','FILUSDT'],['ARB','Arbitrum','layer2','ARBUSDT'],['OP','Optimism','layer2','OPUSDT'],
+            ['MKR','Maker','defi','MKRUSDT'],['ALGO','Algorand','layer1','ALGOUSDT'],['VET','VeChain','layer1','VETUSDT'],['AAVE','Aave','defi','AAVEUSDT'],['IMX','Immutable','gaming','IMXUSDT'],['SAND','The Sandbox','gaming','SANDUSDT'],['MANA','Decentraland','gaming','MANAUSDT'],['INJ','Injective','defi','INJUSDT'],['GRT','The Graph','infra','GRTUSDT'],['THETA','Theta Network','infra','THETAUSDT'],
+            ['XLM','Stellar','payments','XLMUSDT'],['HBAR','Hedera','layer1','HBARUSDT'],['KAS','Kaspa','layer1','KASUSDT'],['PEPE','Pepe','meme','PEPEUSDT'],['WIF','dogwifhat','meme','WIFUSDT'],['RUNE','THORChain','defi','RUNEUSDT'],['LDO','Lido DAO','defi','LDOUSDT'],['QNT','Quant','infra',''],['FLOW','Flow','layer1','FLOWUSDT'],['EOS','EOS','layer1','EOSUSDT'],
+            ['XTZ','Tezos','layer1','XTZUSDT'],['BSV','Bitcoin SV','payments',''],['NEO','NEO','layer1','NEOUSDT'],['EGLD','MultiversX','layer1','EGLDUSDT'],['KCS','KuCoin Token','exchange',''],['SNX','Synthetix','defi','SNXUSDT'],['CRV','Curve DAO','defi','CRVUSDT'],['COMP','Compound','defi','COMPUSDT'],['SUI','Sui','layer1','SUIUSDT'],['SEI','Sei','layer1','SEIUSDT'],
+            ['JASMY','JasmyCoin','ai','JASMYUSDT'],['FET','Artificial Superintelligence Alliance','ai','FETUSDT'],['RENDER','Render','ai','RENDERUSDT'],['TAO','Bittensor','ai','TAOUSDT'],['AKT','Akash Network','ai','AKTUSDT'],['ARKM','Arkham','ai','ARKMUSDT'],['ONDO','Ondo','rwa','ONDOUSDT'],['OM','MANTRA','rwa','OMUSDT'],['PAXG','PAX Gold','rwa','PAXGUSDT'],['CAKE','PancakeSwap','defi','CAKEUSDT'],
+            ['DYDX','dYdX','defi','DYDXUSDT'],['STX','Stacks','layer2','STXUSDT'],['KAVA','Kava','defi','KAVAUSDT'],['MINA','Mina Protocol','layer1','MINAUSDT'],['ZEC','Zcash','privacy','ZECUSDT'],['DASH','Dash','privacy','DASHUSDT'],['ENA','Ethena','defi','ENAUSDT'],['JUP','Jupiter','defi','JUPUSDT'],['PYTH','Pyth Network','oracle','PYTHUSDT'],['RAY','Raydium','defi','RAYUSDT'],
+            ['BONK','Bonk','meme','BONKUSDT'],['FLOKI','FLOKI','meme','FLOKIUSDT'],['AXS','Axie Infinity','gaming','AXSUSDT'],['GALA','Gala','gaming','GALAUSDT'],['ENJ','Enjin Coin','gaming','ENJUSDT'],['APE','ApeCoin','gaming','APEUSDT'],['GMT','STEPN','gaming','GMTUSDT'],['LUNC','Terra Classic','layer1','LUNAUSDT'],['CFX','Conflux','layer1','CFXUSDT'],['ROSE','Oasis Network','privacy','ROSEUSDT'],
+            ['KSM','Kusama','layer1','KSMUSDT'],['1INCH','1inch','defi','1INCHUSDT'],['BAT','Basic Attention Token','infra','BATUSDT'],['CHZ','Chiliz','gaming','CHZUSDT'],['YFI','yearn.finance','defi','YFIUSDT'],['WLD','Worldcoin','ai','WLDUSDT'],['TIA','Celestia','layer1','TIAUSDT'],['STRK','Starknet','layer2','STRKUSDT'],['BLUR','Blur','defi','BLURUSDT'],['ENS','Ethereum Name Service','infra','ENSUSDT']
+        ].map(function(item, index) {
+            return { rank: index + 1, symbol: item[0], name: item[1], category: item[2], binanceSymbol: item[3], pair: item[0] + '-USD', tradeable: Boolean(item[3]) };
+        });
+
+        var coinUniverse = TOP_100_SEED.slice();
+        var coinExplorerCategory = 'all';
+        var coinExplorerView = 'top100';
+        var coinWatchlist = [];
+        try {
+            coinWatchlist = JSON.parse(localStorage.getItem('apexdex_coin_watchlist') || '[]');
+            if (!Array.isArray(coinWatchlist)) coinWatchlist = [];
+        } catch (e) { coinWatchlist = []; }
+
+        var CATEGORY_BY_SYMBOL = {
+            BTC: 'store', ETH: 'layer1', USDT: 'stablecoin', BNB: 'exchange', SOL: 'layer1', USDC: 'stablecoin', XRP: 'payments', DOGE: 'meme', ADA: 'layer1', AVAX: 'layer1',
+            TRX: 'layer1', LINK: 'oracle', TON: 'layer1', SHIB: 'meme', DOT: 'layer1', UNI: 'defi', NEAR: 'layer1', DAI: 'stablecoin', APT: 'layer1', ICP: 'layer1',
+            ARB: 'layer2', OP: 'layer2', AAVE: 'defi', IMX: 'gaming', SAND: 'gaming', MANA: 'gaming', GRT: 'infra', PEPE: 'meme', WIF: 'meme', RENDER: 'ai', FET: 'ai',
+            TAO: 'ai', AKT: 'ai', ONDO: 'rwa', OM: 'rwa', PAXG: 'rwa', PYTH: 'oracle', BONK: 'meme', FLOKI: 'meme', AXS: 'gaming', GALA: 'gaming', WLD: 'ai'
+        };
+
+        var MARKET_PRIMARY_TABS = [
+            { key: 'featured', label: '★ Featured' },
+            { key: 'all', label: 'All' },
+            { key: 'favorites', label: 'Favorites' },
+            { key: 'perps', label: 'Perps' },
+            { key: 'spot', label: 'Spot' },
+            { key: 'rwa', label: 'RWA' }
+        ];
+        var MARKET_CATEGORY_TABS = [
+            { key: 'all', label: 'All' },
+            { key: 'new', label: 'New' },
+            { key: 'majors', label: 'Majors' },
+            { key: 'defi', label: 'DeFi' },
+            { key: 'meme', label: 'Meme' },
+            { key: 'rwa', label: 'RWA' },
+            { key: 'ai', label: 'AI' },
+            { key: 'layer1', label: 'Layer 1' },
+            { key: 'layer2', label: 'Layer 2' },
+            { key: 'gaming', label: 'Gaming' },
+            { key: 'stablecoin', label: 'Stablecoin' },
+            { key: 'infra', label: 'Infrastructure' },
+            { key: 'oracle', label: 'Oracle' },
+            { key: 'payments', label: 'Payments' },
+            { key: 'privacy', label: 'Privacy' },
+            { key: 'exchange', label: 'Exchange' }
+        ];
+        var MARKET_FALLBACK_METRICS = {
+            BTC: { price: 84357.4, change: 2.17, volume: 792440000 },
+            ETH: { price: 2493.07, change: 1.82, volume: 473370000 },
+            SOL: { price: 107.901, change: 1.15, volume: 66000000 },
+            TRX: { price: 0.3452, change: 0.62, volume: 32400000 },
+            ZEC: { price: 1345.609, change: 8.31, volume: 52810000 },
+            DOGE: { price: 0.1824, change: -0.84, volume: 196000000 },
+            XRP: { price: 2.13, change: -1.06, volume: 188000000 },
+            ARB: { price: 0.4112, change: -1.20, volume: 28100000 },
+            PEPE: { price: 0.0000068, change: 3.42, volume: 74200000 },
+            RENDER: { price: 3.84, change: 4.66, volume: 38100000 },
+            ONDO: { price: 0.876, change: 2.51, volume: 21900000 },
+            WLD: { price: 0.5696, change: -3.16, volume: 3600000 }
+        };
+        var marketMenuView = 'all';
+        var marketMenuCategory = 'all';
+        var marketMenuSearch = '';
+        var marketMenuOpen = false;
+        var marketRecents = [];
+        try {
+            marketRecents = JSON.parse(localStorage.getItem('apexdex_market_recents') || '[]');
+            if (!Array.isArray(marketRecents)) marketRecents = [];
+        } catch (e) { marketRecents = []; }
+        if (!marketRecents.length) marketRecents = ['ETH-USD', 'BTC-USD', 'TRX-USD', 'ZEC-USD'];
+
+        function getCoinByPair(pair) {
+            return coinUniverse.find(function(coin) { return coin.pair === pair; });
+        }
+
+        function getMarketMetric(coin) {
+            var fallback = MARKET_FALLBACK_METRICS[coin.symbol] || {};
+            var livePrice = Number(coin.price);
+            var liveChange = Number(coin.change);
+            var liveVolume = Number(coin.volume);
+            return {
+                price: Number.isFinite(livePrice) && livePrice > 0 ? livePrice : fallback.price,
+                change: Number.isFinite(liveChange) ? liveChange : (fallback.change || 0),
+                volume: Number.isFinite(liveVolume) && liveVolume > 0 ? liveVolume : fallback.volume
+            };
+        }
+
+        function formatMarketPrice(value) {
+            if (!Number.isFinite(value)) return '—';
+            if (value < 0.0001) return '$' + value.toFixed(8);
+            if (value < 1) return '$' + value.toFixed(6);
+            if (value < 1000) return '$' + value.toLocaleString('en-US', { maximumFractionDigits: 4 });
+            return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function formatMarketVolume(value) {
+            if (!Number.isFinite(value) || value <= 0) return '—';
+            if (value >= 1000000000) return '$' + (value / 1000000000).toFixed(2) + 'B';
+            if (value >= 1000000) return '$' + (value / 1000000).toFixed(2) + 'M';
+            if (value >= 1000) return '$' + (value / 1000).toFixed(1) + 'K';
+            return '$' + value.toFixed(0);
+        }
+
+        function updatePairMenuTrigger() {
+            var coin = getCoinByPair(state.activePair);
+            var symbol = coin ? coin.symbol : String(state.activePair || 'BTC-USD').split('-')[0];
+            var symbolEl = document.getElementById('pairMenuSymbol');
+            if (symbolEl) symbolEl.textContent = symbol;
+            var trigger = document.getElementById('pairMenuTrigger');
+            if (trigger) trigger.title = 'Open market selector (' + symbol + ')';
+        }
+
+        function positionMarketMenu() {
+            if (!marketMenuOpen) return;
+            var menu = document.getElementById('marketMenu');
+            var trigger = document.getElementById('pairMenuTrigger');
+            if (!menu || !trigger) return;
+            var rect = trigger.getBoundingClientRect();
+            var viewportPadding = 12;
+            var menuWidth = Math.min(780, Math.max(280, window.innerWidth - viewportPadding * 2));
+            var left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - menuWidth - viewportPadding));
+            var estimatedHeight = Math.min(menu.scrollHeight || 520, window.innerHeight - viewportPadding * 2);
+            var top = rect.bottom + 8;
+            if (top + estimatedHeight > window.innerHeight - viewportPadding) top = Math.max(viewportPadding, rect.top - estimatedHeight - 8);
+            menu.style.left = left + 'px';
+            menu.style.top = top + 'px';
+            menu.style.width = menuWidth + 'px';
+        }
+
+        function toggleMarketMenu(force) {
+            var menu = document.getElementById('marketMenu');
+            if (!menu) return;
+            marketMenuOpen = typeof force === 'boolean' ? force : !marketMenuOpen;
+            menu.classList.toggle('hidden', !marketMenuOpen);
+            var chevron = document.getElementById('pairMenuChevron');
+            if (chevron) chevron.textContent = marketMenuOpen ? '⌃' : '⌄';
+            if (marketMenuOpen) {
+                renderMarketMenu();
+                positionMarketMenu();
+                var search = document.getElementById('marketSearch');
+                if (search) search.focus();
+            }
+        }
+
+        function closeMarketMenu() {
+            if (marketMenuOpen) toggleMarketMenu(false);
+        }
+
+        function setMarketMenuView(view) {
+            marketMenuView = view;
+            renderMarketMenu();
+        }
+
+        function setMarketMenuCategory(category) {
+            marketMenuCategory = category;
+            renderMarketMenu();
+        }
+
+        function toggleMarketFavorite(pair, event) {
+            if (event) event.stopPropagation();
+            toggleCoinWatchlist(pair);
+            renderMarketMenu();
+        }
+
+        function selectMarketCoin(pair) {
+            var coin = getCoinByPair(pair);
+            if (!coin) return;
+            if (!coin.tradeable) {
+                triggerToast(coin.symbol + ' is not available on the configured Binance feed.', 'error');
+                return;
+            }
+            marketRecents = [pair].concat(marketRecents.filter(function(item) { return item !== pair; })).slice(0, 6);
+            try { localStorage.setItem('apexdex_market_recents', JSON.stringify(marketRecents)); } catch (e) {}
+            var select = document.getElementById('pairSelect');
+            if (select) select.value = pair;
+            switchPair(pair);
+            // Keep the selector open so the user can continue browsing markets.
+            // It closes only through the explicit close button, Escape, outside-click, or the trigger.
+        }
+
+        function getVisibleMarketCoins() {
+            var query = marketMenuSearch.trim().toLowerCase();
+            var watchSet = new Set(coinWatchlist);
+            return coinUniverse.filter(function(coin) {
+                var matchesView = marketMenuView === 'all' ||
+                    (marketMenuView === 'featured' && coin.rank <= 10) ||
+                    (marketMenuView === 'favorites' && watchSet.has(coin.pair)) ||
+                    (marketMenuView === 'perps' && coin.tradeable) ||
+                    (marketMenuView === 'spot' && coin.tradeable) ||
+                    (marketMenuView === 'rwa' && coin.category === 'rwa');
+                var matchesCategory = marketMenuCategory === 'all' ||
+                    (marketMenuCategory === 'new' && coin.rank > 80) ||
+                    (marketMenuCategory === 'majors' && coin.rank <= 20) ||
+                    coin.category === marketMenuCategory;
+                var matchesSearch = !query || coin.symbol.toLowerCase().includes(query) || coin.name.toLowerCase().includes(query);
+                return matchesView && matchesCategory && matchesSearch;
+            }).sort(function(a, b) { return a.rank - b.rank; });
+        }
+
+        function renderMarketMenu() {
+            var primary = document.getElementById('marketPrimaryTabs');
+            var categories = document.getElementById('marketCategoryTabs');
+            var recents = document.getElementById('marketRecents');
+            var rows = document.getElementById('marketRows');
+            if (!primary || !categories || !recents || !rows) return;
+            primary.textContent = '';
+            MARKET_PRIMARY_TABS.forEach(function(tab) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'market-tab py-1 ' + (marketMenuView === tab.key ? 'active' : '');
+                button.textContent = tab.label;
+                button.addEventListener('click', function(event) { event.stopPropagation(); setMarketMenuView(tab.key); });
+                primary.appendChild(button);
+            });
+            categories.textContent = '';
+            MARKET_CATEGORY_TABS.forEach(function(tab) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'market-tab py-1 ' + (marketMenuCategory === tab.key ? 'active' : '');
+                button.textContent = tab.label;
+                button.addEventListener('click', function(event) { event.stopPropagation(); setMarketMenuCategory(tab.key); });
+                categories.appendChild(button);
+            });
+            recents.textContent = '';
+            var recentLabel = document.createElement('span');
+            recentLabel.className = 'market-recents-label mr-1';
+            recentLabel.textContent = 'Recents';
+            recents.appendChild(recentLabel);
+            marketRecents.map(getCoinByPair).filter(Boolean).forEach(function(coin) {
+                var chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'px-2.5 py-1 rounded-full border border-white/10 bg-white/5 hover:bg-cyber-cyan/10 hover:border-cyber-cyan/40 text-[11px] font-mono text-slate-200';
+                chip.textContent = coin.symbol;
+                chip.addEventListener('click', function() { selectMarketCoin(coin.pair); });
+                recents.appendChild(chip);
+            });
+            rows.textContent = '';
+            var visibleCoins = getVisibleMarketCoins();
+            var watchSet = new Set(coinWatchlist);
+            if (!visibleCoins.length) {
+                var empty = document.createElement('div');
+                empty.className = 'px-3 py-8 text-center text-xs text-slate-500 font-mono';
+                empty.textContent = marketMenuView === 'favorites' ? 'No favorite markets yet.' : 'No markets match this filter.';
+                rows.appendChild(empty);
+                return;
+            }
+            visibleCoins.forEach(function(coin) {
+                var metric = getMarketMetric(coin);
+                var row = document.createElement('div');
+                row.className = 'market-row grid grid-cols-[minmax(150px,1fr)_120px_80px_110px] gap-2 items-center px-3 text-[11px] font-mono cursor-pointer' + (coin.pair === state.activePair ? ' current' : '');
+                row.addEventListener('click', function() { selectMarketCoin(coin.pair); });
+                var marketCell = document.createElement('div');
+                marketCell.className = 'flex items-center gap-2 min-w-0';
+                var star = document.createElement('button');
+                star.type = 'button';
+                star.className = 'market-star text-base leading-none ' + (watchSet.has(coin.pair) ? 'watchlisted' : '');
+                star.title = watchSet.has(coin.pair) ? 'Remove from watchlist' : 'Add to watchlist';
+                star.textContent = watchSet.has(coin.pair) ? '★' : '☆';
+                star.addEventListener('click', function(event) { toggleMarketFavorite(coin.pair, event); });
+                var symbol = document.createElement('span');
+                symbol.className = 'market-symbol truncate';
+                symbol.textContent = coin.symbol;
+                marketCell.appendChild(star);
+                marketCell.appendChild(symbol);
+                var price = document.createElement('span');
+                price.className = 'text-right text-slate-200';
+                price.textContent = formatMarketPrice(metric.price);
+                var change = document.createElement('span');
+                change.className = 'text-right font-semibold ' + (metric.change >= 0 ? 'text-cyber-green' : 'text-cyber-red');
+                change.textContent = (metric.change >= 0 ? '+' : '') + metric.change.toFixed(2) + '%';
+                var volume = document.createElement('span');
+                volume.className = 'text-right text-slate-400';
+                volume.textContent = formatMarketVolume(metric.volume);
+                row.appendChild(marketCell);
+                row.appendChild(price);
+                row.appendChild(change);
+                row.appendChild(volume);
+                rows.appendChild(row);
+            });
+        }
+
+        async function loadBinanceMarketMetrics() {
+            try {
+                var response = await fetch('https://api.binance.com/api/v3/ticker/24hr', { cache: 'no-store' });
+                if (!response.ok) throw new Error('Binance returned HTTP ' + response.status);
+                var tickers = await response.json();
+                if (!Array.isArray(tickers)) throw new Error('Invalid Binance ticker response');
+                var tickerMap = new Map(tickers.map(function(item) { return [item.symbol, item]; }));
+                coinUniverse.forEach(function(coin) {
+                    var ticker = coin.binanceSymbol ? tickerMap.get(coin.binanceSymbol) : null;
+                    if (!ticker) return;
+                    coin.price = Number(ticker.lastPrice);
+                    coin.change = Number(ticker.priceChangePercent);
+                    coin.volume = Number(ticker.quoteVolume);
+                });
+                renderMarketMenu();
+            } catch (error) {
+                // The compact selector keeps deterministic fallback metrics when public APIs are unavailable.
+                renderMarketMenu();
+            }
+        }
+
+        function categoryLabel(key) {
+            var found = COIN_CATEGORIES.find(function(item) { return item.key === key; });
+            return found ? found.label : 'Other';
+        }
+
+        function saveCoinWatchlist() {
+            try { localStorage.setItem('apexdex_coin_watchlist', JSON.stringify(coinWatchlist)); } catch (e) {}
+        }
+
+        function setCoinExplorerView(view) {
+            coinExplorerView = view === 'watchlist' ? 'watchlist' : 'top100';
+            var topBtn = document.getElementById('coinViewTopBtn');
+            var watchBtn = document.getElementById('coinViewWatchBtn');
+            if (topBtn) topBtn.classList.toggle('active', coinExplorerView === 'top100');
+            if (watchBtn) watchBtn.classList.toggle('active', coinExplorerView === 'watchlist');
+            renderCoinExplorer();
+        }
+
+        function setCoinExplorerCategory(category) {
+            coinExplorerCategory = category;
+            document.querySelectorAll('.coin-category-btn').forEach(function(button) {
+                button.classList.toggle('active', button.dataset.category === category);
+            });
+            renderCoinExplorer();
+        }
+
+        function toggleCoinWatchlist(pair) {
+            var index = coinWatchlist.indexOf(pair);
+            if (index >= 0) coinWatchlist.splice(index, 1);
+            else coinWatchlist.push(pair);
+            saveCoinWatchlist();
+            renderPairOptions();
+            renderCoinExplorer();
+            updateCurrentWatchButton();
+        }
+
+        function toggleCurrentCoinWatch() {
+            toggleCoinWatchlist(state.activePair);
+        }
+
+        function updateCurrentWatchButton() {
+            var button = document.getElementById('watchCurrentBtn');
+            if (!button) return;
+            var watched = coinWatchlist.indexOf(state.activePair) >= 0;
+            button.textContent = watched ? '★ Watching' : '☆ Watch';
+            button.classList.toggle('text-cyber-gold', watched);
+            button.title = watched ? 'Remove selected coin from watchlist' : 'Add selected coin to watchlist';
+        }
+
+        function selectCoinForTrading(pair) {
+            var coin = coinUniverse.find(function(item) { return item.pair === pair; });
+            if (!coin) return;
+            if (!coin.tradeable) {
+                triggerToast(coin.symbol + ' is not available on the configured Binance feed.', 'error');
+                return;
+            }
+            var select = document.getElementById('pairSelect');
+            if (select && !Array.from(select.options).some(function(option) { return option.value === pair; })) {
+                var option = document.createElement('option'); option.value = pair; option.textContent = coin.symbol + ' / USD'; select.appendChild(option);
+            }
+            if (select) select.value = pair;
+            switchPair(pair);
+            var terminal = document.getElementById('module-terminal');
+            if (terminal && terminal.classList.contains('hidden')) switchTab('terminal');
+            triggerToast(coin.symbol + ' selected for trading.', 'info');
+        }
+
+        function renderCoinCategoryFilters() {
+            var holder = document.getElementById('coinCategoryFilters');
+            if (!holder) return;
+            holder.textContent = '';
+            COIN_CATEGORIES.forEach(function(category) {
+                var button = document.createElement('button');
+                button.type = 'button'; button.dataset.category = category.key;
+                button.className = 'coin-category-btn px-2 py-1 rounded border border-white/10 text-[10px] font-mono text-slate-400' + (category.key === coinExplorerCategory ? ' active' : '');
+                button.textContent = category.label;
+                button.addEventListener('click', function() { setCoinExplorerCategory(category.key); });
+                holder.appendChild(button);
+            });
+        }
+
+        function renderPairOptions() {
+            var select = document.getElementById('pairSelect');
+            if (!select) return;
+            var active = state.activePair;
+            select.textContent = '';
+            select.title = 'Choose a tradeable coin. Options are grouped by category; your watchlist is first.';
+            var tradeable = coinUniverse.filter(function(coin) { return coin.tradeable; }).sort(function(a, b) { return a.rank - b.rank; });
+            var watched = new Set(coinWatchlist);
+            var watchCoins = tradeable.filter(function(coin) { return watched.has(coin.pair); });
+            function addGroup(label, coins) {
+                if (!coins.length) return;
+                var group = document.createElement('optgroup'); group.label = label;
+                coins.forEach(function(coin) {
+                    var option = document.createElement('option');
+                    option.value = coin.pair;
+                    option.textContent = coin.symbol + ' — ' + coin.name;
+                    group.appendChild(option);
+                });
+                select.appendChild(group);
+            }
+            addGroup('★ Watchlist', watchCoins);
+            COIN_CATEGORIES.filter(function(category) { return category.key !== 'all'; }).forEach(function(category) {
+                addGroup(category.label, tradeable.filter(function(coin) { return coin.category === category.key && !watched.has(coin.pair); }));
+            });
+            addGroup('Other', tradeable.filter(function(coin) { return !COIN_CATEGORIES.some(function(category) { return category.key === coin.category; }) && !watched.has(coin.pair); }));
+            if (Array.from(select.options).some(function(option) { return option.value === active; })) select.value = active;
+            updateCurrentWatchButton();
+        }
+
+        function renderCoinExplorer() {
+            var grid = document.getElementById('coinGrid');
+            if (!grid) return;
+            var query = (document.getElementById('coinSearch')?.value || '').trim().toLowerCase();
+            var watchSet = new Set(coinWatchlist);
+            var filtered = coinUniverse.filter(function(coin) {
+                var matchesView = coinExplorerView === 'top100' || watchSet.has(coin.pair);
+                var matchesCategory = coinExplorerCategory === 'all' || coin.category === coinExplorerCategory;
+                var matchesQuery = !query || coin.symbol.toLowerCase().includes(query) || coin.name.toLowerCase().includes(query);
+                return matchesView && matchesCategory && matchesQuery;
+            });
+            var count = document.getElementById('watchlistCount');
+            if (count) count.textContent = String(coinWatchlist.length);
+            grid.textContent = '';
+            if (!filtered.length) {
+                var empty = document.createElement('div'); empty.className = 'coin-empty'; empty.textContent = coinExplorerView === 'watchlist' ? 'Your watchlist is empty. Tap the star on any coin to save it.' : 'No coins match this filter.'; grid.appendChild(empty); return;
+            }
+            filtered.forEach(function(coin) {
+                var card = document.createElement('article');
+                card.className = 'coin-card rounded-lg p-2.5';
+                if (watchSet.has(coin.pair)) card.classList.add('watchlisted');
+                var header = document.createElement('div'); header.className = 'flex items-start justify-between gap-2';
+                var title = document.createElement('div');
+                var rankLine = document.createElement('div'); rankLine.className = 'flex items-center gap-1.5';
+                var rank = document.createElement('span'); rank.className = 'coin-rank'; rank.textContent = '#' + coin.rank;
+                var symbolText = document.createElement('span'); symbolText.className = 'coin-symbol'; symbolText.textContent = coin.symbol;
+                rankLine.appendChild(rank); rankLine.appendChild(symbolText);
+                var nameText = document.createElement('div'); nameText.className = 'text-[10px] text-slate-500 truncate max-w-[145px]'; nameText.textContent = coin.name;
+                title.appendChild(rankLine); title.appendChild(nameText);
+                var star = document.createElement('button'); star.type = 'button'; star.className = 'coin-watch-btn text-base leading-none' + (watchSet.has(coin.pair) ? ' watchlisted' : ''); star.title = watchSet.has(coin.pair) ? 'Remove from watchlist' : 'Add to watchlist'; star.textContent = watchSet.has(coin.pair) ? '★' : '☆'; star.addEventListener('click', function() { toggleCoinWatchlist(coin.pair); });
+                header.appendChild(title); header.appendChild(star); card.appendChild(header);
+                var meta = document.createElement('div'); meta.className = 'flex items-center justify-between gap-2 mt-2';
+                var category = document.createElement('span'); category.className = 'coin-category ' + coin.category + ' px-1.5 py-0.5 rounded text-[9px] font-mono'; category.textContent = categoryLabel(coin.category); meta.appendChild(category);
+                var pair = document.createElement('span'); pair.className = 'text-[9px] text-slate-500 font-mono'; pair.textContent = coin.tradeable ? 'BINANCE' : 'NO FEED'; meta.appendChild(pair); card.appendChild(meta);
+                var trade = document.createElement('button'); trade.type = 'button'; trade.className = 'coin-trade-btn w-full mt-2 border border-cyber-cyan/30 hover:bg-cyber-cyan/15 text-cyber-cyan rounded py-1 text-[10px] font-bold font-mono'; trade.textContent = coin.tradeable ? 'TRADE ' + coin.symbol : 'FEED UNAVAILABLE'; trade.disabled = !coin.tradeable; trade.addEventListener('click', function() { selectCoinForTrading(coin.pair); }); card.appendChild(trade);
+                grid.appendChild(card);
+            });
+        }
+
+        async function loadCoinUniverse(forceRefresh) {
+            renderCoinCategoryFilters();
+            renderPairOptions();
+            renderCoinExplorer();
+            if (!forceRefresh && sessionStorage.getItem('apexdex_top100_loaded') === '1') return;
+            var status = document.getElementById('coinUniverseStatus');
+            try {
+                var response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h', { cache: 'no-store' });
+                if (!response.ok) throw new Error('CoinGecko returned HTTP ' + response.status);
+                var liveCoins = await response.json();
+                if (!Array.isArray(liveCoins) || liveCoins.length < 50) throw new Error('Incomplete top-100 response');
+                coinUniverse = liveCoins.map(function(item, index) {
+                    var symbol = String(item.symbol || '').toUpperCase();
+                    var seed = TOP_100_SEED.find(function(coin) { return coin.symbol === symbol; });
+                    var category = (seed && seed.category) || CATEGORY_BY_SYMBOL[symbol] || 'infra';
+                    var binanceSymbol = seed ? seed.binanceSymbol : '';
+                    return { rank: item.market_cap_rank || index + 1, symbol: symbol, name: item.name, category: category, pair: symbol + '-USD', binanceSymbol: binanceSymbol, tradeable: Boolean(binanceSymbol), price: item.current_price, change: item.price_change_percentage_24h, volume: item.total_volume };
+                });
+                sessionStorage.setItem('apexdex_top100_loaded', '1');
+                if (status) { status.textContent = 'LIVE COINGECKO RANKS'; status.className = 'text-[10px] text-cyber-cyan border border-cyber-cyan/30 bg-cyber-cyan/10 px-1.5 py-0.5 rounded font-mono'; }
+                renderPairOptions(); renderCoinExplorer(); renderMarketMenu(); updatePairMenuTrigger();
+            } catch (error) {
+                if (status) status.title = error.message;
+                renderCoinExplorer(); renderMarketMenu(); updatePairMenuTrigger();
+            }
+        }
+
         var charts = [];
         var candlestickSeriesArr = [];
         var volumeSeriesArr = [];
@@ -1865,6 +2504,8 @@
 
         // ==================== BINANCE HISTORY & REAL-TIME STREAMING ====================
         function getBinanceSymbol(pair) {
+            var coin = coinUniverse.find(function(item) { return item.pair === pair; });
+            if (coin && coin.binanceSymbol) return coin.binanceSymbol;
             var symbolMap = { 'BTC-USD': 'BTCUSDT', 'ETH-USD': 'ETHUSDT', 'SOL-USD': 'SOLUSDT', 'ARB-USD': 'ARBUSDT' };
             return symbolMap[pair] || 'BTCUSDT';
         }
@@ -2316,15 +2957,21 @@
 
         // ==================== PAIR & TIMEFRAME CONTROLS ====================
         function switchPair(pair) {
+            var coin = coinUniverse.find(function(item) { return item.pair === pair; });
+            if (coin && !coin.tradeable) {
+                triggerToast(coin.symbol + ' has no configured Binance market feed.', 'error');
+                return;
+            }
             state.activePair = pair;
-            var symbolMap = {
-                'BTC-USD': 'BINANCE:BTCUSDT',
-                'ETH-USD': 'BINANCE:ETHUSDT',
-                'SOL-USD': 'BINANCE:SOLUSDT',
-                'ARB-USD': 'BINANCE:ARBUSDT'
-            };
+            var symbolMap = {};
+            coinUniverse.forEach(function(item) { if (item.binanceSymbol) symbolMap[item.pair] = 'BINANCE:' + item.binanceSymbol; });
             var lbl = document.getElementById('tvSymbolLabel');
             if (lbl) lbl.textContent = symbolMap[pair] || 'BINANCE:BTCUSDT';
+            var pairSelect = document.getElementById('pairSelect');
+            if (pairSelect) pairSelect.value = pair;
+            updateCurrentWatchButton();
+            updatePairMenuTrigger();
+            renderMarketMenu();
 
             clearPriceLines();
             fetchKlinesHistory();
@@ -3274,6 +3921,28 @@
             recalcSwapQuote();
             updateMevSimulation();
             syncLpUI();
+            updatePairMenuTrigger();
+            renderMarketMenu();
+            loadCoinUniverse(false);
+            var marketSearch = document.getElementById('marketSearch');
+            if (marketSearch) marketSearch.addEventListener('input', function(event) {
+                marketMenuSearch = event.target.value || '';
+                renderMarketMenu();
+            });
+            document.addEventListener('click', function(event) {
+                var selector = document.getElementById('marketSelector');
+                if (marketMenuOpen && selector && !selector.contains(event.target)) closeMarketMenu();
+            });
+            var marketMenu = document.getElementById('marketMenu');
+            if (marketMenu) marketMenu.addEventListener('click', function(event) {
+                event.stopPropagation();
+            });
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') closeMarketMenu();
+            });
+            window.addEventListener('resize', positionMarketMenu);
+            window.addEventListener('scroll', positionMarketMenu, true);
+            loadBinanceMarketMetrics();
 
             // Accrue LP fees in real time when user has active LP deposits
             state.lpFeeTimer = setInterval(function() {
