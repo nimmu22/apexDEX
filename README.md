@@ -1,20 +1,24 @@
 # ApexDEX Enterprise Terminal
 
-Institutional DeFi Trading Terminal with Real-time Charting, On-Chain Execution, and MEV Protection.
+Institutional-style decentralized trading terminal demo with live Binance price feeds, candlestick charting, swap routing, flash-loan and pool views, and a security dashboard.
 
-## Quick GitHub Pages Deployment
+## Run locally
+Open `index.html` in a browser, or serve the folder: `npx serve .`
 
-1. Unzip this package.
-2. Initialize git and commit:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   ```
-3. Push to your GitHub repository:
-   ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
-   git branch -M main
-   git push -u origin main
-   ```
-4. Go to **Settings > Pages** in your GitHub repo and set source to **GitHub Actions** or **main branch / root**.
+## Deploy to GitHub Pages
+1. Create a repository and push this folder to `main`.
+2. In **Settings > Pages**, set **Source** to **GitHub Actions**.
+3. The included workflow (`.github/workflows/pages.yml`) publishes the site on every push.
+
+```bash
+git init -b main
+git add .
+git commit -m "Initial commit"
+git remote add origin https://github.com/<you>/<repo>.git
+git push -u origin main
+```
+
+## Notes
+- Market data comes from Binance public endpoints (WebSocket with REST polling fallback).
+- Trading, swap and wallet flows are simulated; no real transactions are sent.
+- Dependencies load from CDNs with pinned versions: Tailwind, Lucide, Lightweight Charts, JSZip, ethers.
