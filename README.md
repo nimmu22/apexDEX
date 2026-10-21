@@ -1,24 +1,11 @@
-# ApexDEX Enterprise Terminal
+# ApexDEX Enterprise Terminal (v4.0 Quantum Institutional)
 
-Institutional-style decentralized trading terminal demo with live Binance price feeds, candlestick charting, swap routing, flash-loan and pool views, and a security dashboard.
+Institutional-grade decentralized trading terminal featuring:
+- 1x1 & 2x1 Multi-Chart Split View with Volume Histogram, SMA-20, EMA-50, Bollinger Bands, RSI-14, and On-Chart Position Lines
+- Real-time Binance WebSocket + REST Depth/Kline streams with 2D Market Depth Canvas & Bid/Ask Imbalance gauge
+- Automated Risk Engine executing Take Profit, Stop Loss, and Liquidations in real time with Web Audio API chimes
+- Multi-Hop AMM Smart Order Router, Auto-Bot MEV Flashloan Arbitrage simulator, and Concentrated LP fee accrual engine
+- Hardened Web3 wallet connection (EIP-1193 MetaMask + Arbitrum One Chain ID 42161 verification & EIP-712 Permit diagnostics)
 
-## Run locally
-Open `index.html` in a browser, or serve the folder: `npx serve .`
-
-## Deploy to GitHub Pages
-1. Create a repository and push this folder to `main`.
-2. In **Settings > Pages**, set **Source** to **GitHub Actions**.
-3. The included workflow (`.github/workflows/pages.yml`) publishes the site on every push.
-
-```bash
-git init -b main
-git add .
-git commit -m "Initial commit"
-git remote add origin https://github.com/<you>/<repo>.git
-git push -u origin main
-```
-
-## Notes
-- Market data comes from Binance public endpoints (WebSocket with REST polling fallback).
-- Trading, swap and wallet flows are simulated; no real transactions are sent.
-- Dependencies load from CDNs with pinned versions: Tailwind, Lucide, Lightweight Charts, JSZip, ethers.
+## Launching Locally
+Open `index.html` directly in any modern browser or serve via `npx serve .`.
