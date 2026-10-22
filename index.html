@@ -252,6 +252,7 @@
                     <div class="flex items-center gap-1.5">
                         <span class="text-base font-black tracking-tight text-white">APEX<span class="text-cyber-cyan">DEX</span></span>
                         <span class="hidden sm:inline-block bg-emerald-500/10 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-500/30 font-bold tracking-wider">QUANTUM v4.0</span>
+                        <span class="hidden sm:inline-block bg-amber-500/10 text-amber-300 text-[10px] font-mono px-2 py-0.5 rounded border border-amber-500/30 font-bold tracking-wider">DEMO ONLY · NO REAL TRADES</span>
                     </div>
                 </div>
 
@@ -669,7 +670,7 @@
                         </div>
 
                         <button id="submitOrderBtn" onclick="executeOrder()" class="w-full bg-cyber-green hover:opacity-95 text-white font-bold py-2.5 rounded-lg shadow-md transition text-xs font-mono tracking-wider">
-                            PLACE MARKET ORDER
+                            SIMULATE MARKET ORDER
                         </button>
                     </div>
                 </div>
@@ -1200,31 +1201,9 @@
             ws: null,
             pollTimer: null,
             depthTimer: null,
-            positions: [
-                {
-                    id: 'pos-initial-1',
-                    pair: 'BTC-USD',
-                    side: 'buy',
-                    margin: 500.00,
-                    leverage: 10,
-                    notional: 5000.00,
-                    entryPrice: 84210.00,
-                    liqPrice: 76210.05,
-                    tp: 88000.00,
-                    sl: 81500.00
-                }
-            ],
+            positions: [],
             openOrders: [],
-            history: [
-                {
-                    time: '23:10:04',
-                    pair: 'BTC-USD',
-                    action: 'OPEN LONG (10x)',
-                    price: 84210.00,
-                    notional: 5000.00,
-                    pnlText: 'Fee: -$2.50'
-                }
-            ],
+            history: [],
             lpBalances: { 1: 0, 2: 0 }
         };
 
@@ -2744,7 +2723,8 @@
 
             if (elChange && change) {
                 var numChange = parseFloat(change);
-                elChange.textContent = (numChange >= 0 ? '+' : '') + change;
+                var normalizedChange = String(change).replace(/^\+/, '');
+                elChange.textContent = (numChange >= 0 ? '+' : '') + normalizedChange;
                 elChange.className = numChange >= 0
                     ? 'text-[11px] font-bold text-cyber-green px-1.5 py-0.5 rounded bg-cyber-green/10'
                     : 'text-[11px] font-bold text-cyber-red px-1.5 py-0.5 rounded bg-cyber-red/10';
@@ -3204,7 +3184,7 @@
                     pnlText: 'Fee: -$' + fee.toFixed(2)
                 });
 
-                triggerToast('Order Executed: ' + state.orderSide.toUpperCase() + ' $' + notional.toLocaleString() + ' (' + state.leverage + 'x) on ' + state.activePair);
+                triggerToast('Demo Order Simulated: ' + state.orderSide.toUpperCase() + ' $' + notional.toLocaleString() + ' (' + state.leverage + 'x) on ' + state.activePair);
                 syncPositionPriceLines();
             } else {
                 state.openOrders.unshift({
@@ -3220,7 +3200,7 @@
                     tp: tpVal,
                     sl: slVal
                 });
-                triggerToast(state.orderType.toUpperCase() + ' Order Placed: ' + state.orderSide.toUpperCase() + ' ' + state.activePair + ' @ $' + targetPrice.toLocaleString());
+                triggerToast('Demo ' + state.orderType.toUpperCase() + ' Order Simulated: ' + state.orderSide.toUpperCase() + ' ' + state.activePair + ' @ $' + targetPrice.toLocaleString());
                 switchBlotterTab('orders');
             }
 
