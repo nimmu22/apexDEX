@@ -438,7 +438,7 @@
                                 <div class="flex items-center gap-1.5 font-bold text-white bg-cyber-900 px-2.5 py-1 rounded border border-white/10">
                                     <span id="tvSymbolLabel">BINANCE:BTCUSDT</span>
                                     <span id="tvBadge" class="text-[10px] bg-cyber-cyan/20 text-cyber-cyan px-1.5 py-0.5 rounded">1m</span>
-                                    <span class="text-[10px] bg-cyber-green/10 text-cyber-green border border-cyber-green/20 px-1.5 py-0.5 rounded">Candle closes <strong id="candleCountdown">00:59</strong></span>
+                                    <span class="text-[10px] text-slate-400">Candle closes <strong id="candleCountdown" class="text-cyber-gold">00:59</strong></span>
                                 </div>
                                 <span id="ohlcReadout" class="hidden sm:inline text-[11px] text-slate-400">O: -- H: -- L: -- C: --</span>
                                 <span id="rsiReadout" class="text-[10px] bg-cyber-purple/20 text-purple-300 border border-cyber-purple/30 px-1.5 py-0.5 rounded">RSI(14): 54.2</span>
@@ -1105,32 +1105,27 @@
                 <div class="flex flex-wrap justify-between items-center gap-3">
                     <div>
                         <h2 class="font-bold text-lg text-white">Paper Trading Performance</h2>
-                        <p class="text-xs text-slate-400">Review closed demo trades, realized PnL, win rate, and risk discipline.</p>
+                        <p class="text-xs text-slate-400">Demo-only results from this browser. No live funds or wallet transaction.</p>
                     </div>
-                    <span class="text-xs text-cyber-gold bg-cyber-gold/10 text-cyber-gold px-2.5 py-1 rounded border border-cyber-gold/30 font-mono">Demo Analytics</span>
+                    <button onclick="switchTab('terminal')" class="text-xs text-cyber-cyan hover:underline">Back to Terminal</button>
                 </div>
-                <div class="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
-                    <div class="glass-input p-3 rounded-xl"><div class="text-[10px] text-slate-400 uppercase">Net PnL</div><strong id="performanceNetPnl" class="text-lg text-cyber-green">$0.00</strong></div>
-                    <div class="glass-input p-3 rounded-xl"><div class="text-[10px] text-slate-400 uppercase">Win Rate</div><strong id="performanceWinRate" class="text-lg text-white">0.0%</strong></div>
-                    <div class="glass-input p-3 rounded-xl"><div class="text-[10px] text-slate-400 uppercase">Closed Trades</div><strong id="performanceTradeCount" class="text-lg text-white">0</strong></div>
-                    <div class="glass-input p-3 rounded-xl"><div class="text-[10px] text-slate-400 uppercase">Avg Win</div><strong id="performanceAvgWin" class="text-lg text-cyber-green">$0.00</strong></div>
-                    <div class="glass-input p-3 rounded-xl"><div class="text-[10px] text-slate-400 uppercase">Avg Loss</div><strong id="performanceAvgLoss" class="text-lg text-cyber-red">$0.00</strong></div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="bg-cyber-950/70 border border-white/10 rounded-xl p-3"><div class="text-[10px] text-slate-400 uppercase">Net PnL</div><div id="performanceNetPnl" class="text-xl font-bold text-cyber-green">+$0.00</div></div>
+                    <div class="bg-cyber-950/70 border border-white/10 rounded-xl p-3"><div class="text-[10px] text-slate-400 uppercase">Win Rate</div><div id="performanceWinRate" class="text-xl font-bold text-white">0%</div></div>
+                    <div class="bg-cyber-950/70 border border-white/10 rounded-xl p-3"><div class="text-[10px] text-slate-400 uppercase">Closed Trades</div><div id="performanceTradeCount" class="text-xl font-bold text-white">0</div></div>
+                    <div class="bg-cyber-950/70 border border-white/10 rounded-xl p-3"><div class="text-[10px] text-slate-400 uppercase">Avg Win / Loss</div><div id="performanceAvg" class="text-sm font-bold text-white">+$0.00 / -$0.00</div></div>
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                    <div class="lg:col-span-2 glass-input rounded-xl overflow-x-auto">
-                        <table class="w-full text-left border-collapse font-mono text-xs">
-                            <thead><tr class="text-[10px] text-slate-400 uppercase border-b border-white/5"><th class="py-2 px-3">Time</th><th class="py-2 px-3">Market</th><th class="py-2 px-3">Action</th><th class="py-2 px-3">Realized PnL</th></tr></thead>
-                            <tbody id="performanceTableBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="glass-input rounded-xl p-4 space-y-3">
-                        <div class="flex justify-between text-xs"><span class="text-slate-400">Wins</span><strong id="performanceWins" class="text-cyber-green">0</strong></div>
-                        <div class="flex justify-between text-xs"><span class="text-slate-400">Losses</span><strong id="performanceLosses" class="text-cyber-red">0</strong></div>
-                        <div class="flex justify-between text-xs"><span class="text-slate-400">Profit Factor</span><strong id="performanceProfitFactor" class="text-white">—</strong></div>
-                        <div class="flex justify-between text-xs"><span class="text-slate-400">Max Drawdown</span><strong id="performanceDrawdown" class="text-cyber-red">$0.00</strong></div>
-                        <div class="h-2 rounded-full bg-cyber-900 overflow-hidden"><div id="performanceWinBar" class="h-full bg-cyber-green transition-all" style="width:0%"></div></div>
-                        <p class="text-[10px] text-slate-500">Only closed simulated positions count toward these statistics.</p>
-                    </div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                    <div class="bg-cyber-900/60 rounded-lg p-3"><span class="text-slate-400">Wins</span><strong id="performanceWins" class="block text-cyber-green">0</strong></div>
+                    <div class="bg-cyber-900/60 rounded-lg p-3"><span class="text-slate-400">Losses</span><strong id="performanceLosses" class="block text-cyber-red">0</strong></div>
+                    <div class="bg-cyber-900/60 rounded-lg p-3"><span class="text-slate-400">Profit Factor</span><strong id="performanceProfitFactor" class="block text-white">0.00</strong></div>
+                    <div class="bg-cyber-900/60 rounded-lg p-3"><span class="text-slate-400">Max Drawdown</span><strong id="performanceDrawdown" class="block text-cyber-red">$0.00</strong></div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead><tr class="text-[10px] text-slate-500 uppercase border-b border-white/10"><th class="py-2">Time</th><th>Pair</th><th>Action</th><th>Realized PnL</th></tr></thead>
+                        <tbody id="performanceHistoryBody"><tr><td colspan="4" class="py-4 text-center text-slate-500">No closed paper trades yet.</td></tr></tbody>
+                    </table>
                 </div>
             </div>
         </section>
@@ -1878,6 +1873,10 @@
             triggerToast('Demo Vault reset to 10,000.00 USDC baseline.');
         }
 
+        // ==================== SANITIZED ZIP EXPORT ====================
+
+        var TIMEFRAME_SECONDS = { '1m': 60, '3m': 180, '5m': 300, '15m': 900, '30m': 1800, '1h': 3600, '2h': 7200, '4h': 14400, '6h': 21600, '8h': 28800, '12h': 43200 };
+
         function addDemoFunds() {
             var raw = window.prompt('Add demo funds in USDC (paper balance only):', '5000');
             if (raw === null) return;
@@ -1890,7 +1889,78 @@
             state.tokenBalances.USDC = state.userBalance;
             savePortfolioState();
             updateBalanceDisplay();
-            triggerToast('Added 
+            triggerToast('Added ' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' demo USDC. No wallet transaction was sent.', 'info');
+        }
+
+        function updateCandleCountdown() {
+            var el = document.getElementById('candleCountdown');
+            if (!el) return;
+            var seconds = TIMEFRAME_SECONDS[state.timeframe] || 60;
+            var remaining = seconds - (Math.floor(Date.now() / 1000) % seconds);
+            var mins = Math.floor(remaining / 60);
+            var secs = remaining % 60;
+            el.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+        }
+
+        function renderPerformance() {
+            var closed = state.history.filter(function(item) {
+                return typeof item.realizedPnl === 'number' && Number.isFinite(item.realizedPnl);
+            });
+            var wins = closed.filter(function(item) { return item.realizedPnl > 0; });
+            var losses = closed.filter(function(item) { return item.realizedPnl <= 0; });
+            var net = closed.reduce(function(sum, item) { return sum + item.realizedPnl; }, 0);
+            var avgWin = wins.length ? wins.reduce(function(sum, item) { return sum + item.realizedPnl; }, 0) / wins.length : 0;
+            var avgLoss = losses.length ? losses.reduce(function(sum, item) { return sum + item.realizedPnl; }, 0) / losses.length : 0;
+            var grossWin = wins.reduce(function(sum, item) { return sum + item.realizedPnl; }, 0);
+            var grossLoss = Math.abs(losses.reduce(function(sum, item) { return sum + item.realizedPnl; }, 0));
+            var equity = 0, peak = 0, drawdown = 0;
+            closed.slice().reverse().forEach(function(item) {
+                equity += item.realizedPnl;
+                peak = Math.max(peak, equity);
+                drawdown = Math.min(drawdown, equity - peak);
+            });
+            var values = {
+                performanceNetPnl: (net >= 0 ? '+$' : '-$') + Math.abs(net).toFixed(2),
+                performanceWinRate: (closed.length ? ((wins.length / closed.length) * 100).toFixed(1) : '0.0') + '%',
+                performanceTradeCount: String(closed.length),
+                performanceAvg: '+$' + avgWin.toFixed(2) + ' / -$' + Math.abs(avgLoss).toFixed(2),
+                performanceWins: String(wins.length),
+                performanceLosses: String(losses.length),
+                performanceProfitFactor: grossLoss > 0 ? (grossWin / grossLoss).toFixed(2) : (grossWin > 0 ? '∞' : '0.00'),
+                performanceDrawdown: '-$' + Math.abs(drawdown).toFixed(2)
+            };
+            Object.keys(values).forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = values[id];
+            });
+            var netEl = document.getElementById('performanceNetPnl');
+            if (netEl) netEl.className = 'text-xl font-bold ' + (net >= 0 ? 'text-cyber-green' : 'text-cyber-red');
+            var body = document.getElementById('performanceHistoryBody');
+            if (!body) return;
+            body.innerHTML = '';
+            if (!closed.length) {
+                var empty = document.createElement('tr');
+                var cell = document.createElement('td');
+                cell.colSpan = 4;
+                cell.className = 'py-4 text-center text-slate-500';
+                cell.textContent = 'No closed paper trades yet.';
+                empty.appendChild(cell);
+                body.appendChild(empty);
+                return;
+            }
+            closed.forEach(function(item) {
+                var row = document.createElement('tr');
+                row.className = 'border-b border-white/5';
+                [item.time, item.pair, item.action, (item.realizedPnl >= 0 ? '+$' : '-$') + Math.abs(item.realizedPnl).toFixed(2)].forEach(function(value, index) {
+                    var cell = document.createElement('td');
+                    cell.className = 'py-2 ' + (index === 3 ? (item.realizedPnl >= 0 ? 'text-cyber-green' : 'text-cyber-red') : 'text-slate-300');
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+                body.appendChild(row);
+            });
+        }
+
         function downloadProjectZip() {
             triggerToast('Building sanitized project ZIP package...', 'info');
             try {
@@ -3515,7 +3585,8 @@
                 action: tag,
                 price: mark,
                 notional: pos.notional,
-                pnlText: (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(2) + ' USDC'
+                pnlText: (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(2) + ' USDC',
+                realizedPnl: pnl
             });
 
             playExecutionSound('ok');
