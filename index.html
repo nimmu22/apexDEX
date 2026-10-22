@@ -472,9 +472,8 @@
                                 <div class="w-full h-full relative flex flex-col min-h-[415px]">
                                     <div class="w-full h-full flex-1 relative min-h-[415px]">
                                     <div id="tvChartContainer1" class="w-full h-full relative min-h-[415px]"></div>
-                                    <div id="chartCandleCountdown" class="absolute bottom-2 right-2 z-10 pointer-events-none rounded bg-cyber-950/85 border border-white/10 px-2 py-1 text-[10px] font-mono shadow-lg">
-                                        <span class="text-slate-400">Candle closes</span>
-                                        <strong id="candleCountdown" class="ml-1 text-cyber-gold">00:59</strong>
+                                    <div id="chartCandleCountdown" class="absolute right-2 z-10 pointer-events-none text-[11px] font-mono font-semibold text-cyber-gold drop-shadow-[0_0_4px_rgba(245,158,11,.75)]">
+                                        <strong id="candleCountdown">00:59</strong>
                                     </div>
                                 </div>
                                 </div>
@@ -563,9 +562,12 @@
                         </div>
                     </div>
 
-                    <div class="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-400">
-                        <span>Click row to set Limit</span>
-                        <span id="depthSourceBadge" class="text-cyber-cyan font-semibold">L2 Live Stream</span>
+                    <div id="recentExecutionsPanel" class="mt-2 border-t border-white/10 pt-2">
+                        <div class="flex items-center justify-between text-[10px] uppercase tracking-wide">
+                            <span class="text-slate-300 font-semibold">Fills</span>
+                            <span class="text-slate-500">Paper</span>
+                        </div>
+                        <div id="recentExecutionsList" class="mt-1 space-y-1 max-h-[112px] overflow-y-auto"></div>
                     </div>
                 </div>
 
@@ -1900,6 +1902,19 @@
             triggerToast('Added ' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' demo USDC. No wallet transaction was sent.', 'info');
         }
 
+        function positionCandleCountdown() {
+            var el = document.getElementById('chartCandleCountdown');
+            var chartWrap = el ? el.parentElement : null;
+            var series = candlestickSeriesArr[0];
+            if (!el || !chartWrap || !series || typeof series.priceToCoordinate !== 'function') return;
+            var price = state.prices[state.activePair] || (state.candles.length ? state.candles[state.candles.length - 1].close : null);
+            var y = price == null ? null : series.priceToCoordinate(price);
+            if (y == null || !Number.isFinite(y)) return;
+            var maxTop = Math.max(4, chartWrap.clientHeight - 22);
+            el.style.top = Math.max(4, Math.min(maxTop, y + 6)) + 'px';
+            el.style.bottom = 'auto';
+        }
+
         function updateCandleCountdown() {
             var el = document.getElementById('candleCountdown');
             if (!el) return;
@@ -1908,6 +1923,59 @@
             var mins = Math.floor(remaining / 60);
             var secs = remaining % 60;
             el.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+            positionCandleCountdown();
+        }
+
+        function renderExecutionMarkers() {
+            var series = candlestickSeriesArr[0];
+            if (!series || typeof series.setMarkers !== 'function') return;
+            var step = TIMEFRAME_SECONDS[state.timeframe] || 60;
+            var markers = state.history.filter(function(item) {
+                return item.pair === state.activePair && Number.isFinite(Number(item.chartTime));
+            }).slice(0, 40).map(function(item) {
+                var action = String(item.action || '').toUpperCase();
+                var isSell = action.indexOf('SHORT') !== -1 || action.indexOf('SELL') !== -1 || action.indexOf('CLOSE') !== -1;
+                var isFill = action.indexOf('FILLED') !== -1 || action.indexOf('OPEN') !== -1 || action.indexOf('CLOSE') !== -1;
+                if (!isFill) return null;
+                return {
+                    time: Math.floor(Number(item.chartTime) / step) * step,
+                    position: isSell ? 'aboveBar' : 'belowBar',
+                    color: isSell ? '#EF4444' : '#10B981',
+                    shape: isSell ? 'arrowDown' : 'arrowUp',
+                    text: action.indexOf('CLOSE') !== -1 ? 'CLOSE' : (isSell ? 'SELL' : 'BUY')
+                };
+            }).filter(Boolean).sort(function(a, b) { return a.time - b.time; });
+            series.setMarkers(markers);
+        }
+
+        function renderExecutionFeed() {
+            var list = document.getElementById('recentExecutionsList');
+            if (!list) return;
+            list.innerHTML = '';
+            var entries = state.history.filter(function(item) { return item.pair === state.activePair; }).slice(0, 4);
+            if (!entries.length) {
+                var empty = document.createElement('div');
+                empty.className = 'text-[10px] text-slate-500 py-2';
+                empty.textContent = 'No fills yet';
+                list.appendChild(empty);
+                return;
+            }
+            entries.forEach(function(item) {
+                var row = document.createElement('div');
+                var action = String(item.action || '').toUpperCase();
+                var isSell = action.indexOf('SHORT') !== -1 || action.indexOf('SELL') !== -1 || action.indexOf('CLOSE') !== -1;
+                row.className = 'grid grid-cols-[48px_1fr_auto] gap-1 items-center text-[10px] font-mono';
+                var time = document.createElement('span');
+                time.className = 'text-slate-500';
+                time.textContent = item.time || '--:--:--';
+                var label = document.createElement('span');
+                label.className = isSell ? 'text-cyber-red truncate' : 'text-cyber-green truncate';
+                label.textContent = action.replace(/\s+\([^)]*\)/, '');
+                var price = document.createElement('span');
+                price.className = 'text-slate-300';
+                price.textContent = '$' + Number(item.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                row.appendChild(time); row.appendChild(label); row.appendChild(price); list.appendChild(row);
+            });
         }
 
         function renderPerformance() {
@@ -2282,6 +2350,7 @@
         function resizeAllCharts() {
             var c1 = document.getElementById('tvChartContainer1');
             if (c1 && charts[0]) charts[0].resize(c1.clientWidth, c1.clientHeight || 415);
+            positionCandleCountdown();
             var c2 = document.getElementById('tvChartContainer2');
             if (c2 && charts[1] && state.chartLayout === '2x1') {
                 charts[1].resize(c2.clientWidth, c2.clientHeight || 380);
@@ -2699,6 +2768,8 @@
                     updateTechnicalOverlays();
                     syncPositionPriceLines();
                     updateLiveCandleReadout();
+                    renderExecutionMarkers();
+                    positionCandleCountdown();
                 }
 
                 if (tickerData && tickerData.lastPrice) {
@@ -2744,6 +2815,8 @@
             updateTechnicalOverlays();
             syncPositionPriceLines();
             updateLiveCandleReadout();
+            renderExecutionMarkers();
+            positionCandleCountdown();
         }
 
         function initPriceStream() {
@@ -2899,6 +2972,7 @@
             checkOpenOrdersFill(curPrice);
             evaluatePositionRiskTriggers();
             if (!state.crosshairActive) updateLiveCandleReadout();
+            positionCandleCountdown();
             scheduleMarketUiRefresh();
         }
 
@@ -3377,6 +3451,7 @@
 
                 state.history.unshift({
                     time: new Date().toTimeString().slice(0, 8),
+                    chartTime: Math.floor(Date.now() / 1000),
                     pair: state.activePair,
                     action: 'OPEN ' + (state.orderSide === 'buy' ? 'LONG' : 'SHORT') + ' (' + state.leverage + 'x)',
                     price: marketPrice,
@@ -3390,6 +3465,7 @@
                 state.openOrders.unshift({
                     id: 'ord-' + Date.now(),
                     time: new Date().toTimeString().slice(0, 8),
+                    chartTime: Math.floor(Date.now() / 1000),
                     pair: state.activePair,
                     type: state.orderType.toUpperCase(),
                     side: state.orderSide,
@@ -3619,6 +3695,7 @@
 
             state.history.unshift({
                 time: new Date().toTimeString().slice(0, 8),
+                chartTime: Math.floor(Date.now() / 1000),
                 pair: pos.pair,
                 action: 'PARTIAL CLOSE 50% ' + (pos.side === 'buy' ? 'LONG' : 'SHORT'),
                 price: mark,
@@ -3651,6 +3728,7 @@
             var tag = reasonLabel || ('CLOSE ' + (pos.side === 'buy' ? 'LONG' : 'SHORT'));
             state.history.unshift({
                 time: new Date().toTimeString().slice(0, 8),
+                chartTime: Math.floor(Date.now() / 1000),
                 pair: pos.pair,
                 action: tag,
                 price: mark,
@@ -3705,6 +3783,7 @@
                     });
                     state.history.unshift({
                         time: new Date().toTimeString().slice(0, 8),
+                        chartTime: Math.floor(Date.now() / 1000),
                         pair: ord.pair,
                         action: 'FILLED ' + ord.type + ' ' + (ord.side === 'buy' ? 'LONG' : 'SHORT'),
                         price: ord.limitPrice,
@@ -3812,9 +3891,11 @@
                 });
                 tbody.appendChild(tr);
             });
+            renderExecutionFeed();
+            renderExecutionMarkers();
         }
 
-        // ==================== DYNAMIC AMM SWAP ENGINE ====================
+        // ==================== DYNAMIC AMM SWAP ENGINE ====
         function getTokenUsdPrice(token) {
             if (token === 'USDC') return 1.0;
             if (token === 'ETH') return state.prices['ETH-USD'] || 2850.40;
@@ -4117,6 +4198,8 @@
             initCharts();
             updateBalanceDisplay();
             updateOrderPreview();
+            renderExecutionFeed();
+            renderExecutionMarkers();
             renderPositionsBlotter();
             renderOpenOrdersBlotter();
             renderHistoryBlotter();
