@@ -3497,8 +3497,12 @@
             renderMarketMenu();
 
             clearPriceLines();
+            renderExecutionMarkers();
+            renderExecutionPaths();
+            renderExecutionFeed();
             if (candlestickSeriesArr[0]) candlestickSeriesArr[0].setData([]);
             if (volumeSeriesArr[0]) volumeSeriesArr[0].setData([]);
+            fitPrimaryChartContent();
             updateTickerDisplay(
                 seedPrice,
                 (Number(metric.change) >= 0 ? '+' : '') + Number(metric.change || 0).toFixed(2) + '%',
