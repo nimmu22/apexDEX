@@ -3510,6 +3510,8 @@
                 (seedPrice * 0.985).toFixed(seedPrice < 10 ? 4 : 2),
                 metric.volume ? (Number(metric.volume) / 1000000).toFixed(2) + 'M' : '--'
             );
+            autoFillTpSl('tp');
+            autoFillTpSl('sl');
             generateSyntheticCandles();
             fetchKlinesHistory();
             initPriceStream();
