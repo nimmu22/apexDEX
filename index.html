@@ -1034,16 +1034,16 @@
                 <div class="flex flex-wrap justify-between items-center gap-3">
                     <div>
                         <h2 class="font-bold text-lg text-white">Institutional Vault Inspector</h2>
-                        <p class="text-xs text-slate-400">Real-time client security diagnostics, EIP-712 Permit verification &amp; token allowance controls</p>
+                        <p class="text-xs text-slate-400">Demo-only diagnostics. No contract audit, signature flow, or on-chain allowance control is implemented.</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <button onclick="testEip712Signature()" class="bg-cyber-blue/20 hover:bg-cyber-blue/30 text-cyber-blue border border-cyber-blue/40 px-3 py-1 rounded-lg text-xs font-mono font-bold">
-                            Verify EIP-712 Permit
+                            Demo: EIP-712 (no signing)
                         </button>
                         <button onclick="runSecurityAudit()" class="bg-cyber-cyan/20 hover:bg-cyber-cyan/30 text-cyber-cyan border border-cyber-cyan/40 px-3 py-1 rounded-lg text-xs font-mono font-bold">
-                            Run Live Security Audit
+                            Demo: local checks only
                         </button>
-                        <span class="text-xs text-cyber-green bg-cyber-green/10 px-2.5 py-1 rounded border border-cyber-green/30 font-mono">Contract Shield v2 Active</span>
+                        <span class="text-xs text-cyber-green bg-cyber-green/10 px-2.5 py-1 rounded border border-cyber-green/30 font-mono">Demo Mode — Not Audited</span>
                     </div>
                 </div>
 
@@ -1051,38 +1051,38 @@
                     <div class="glass-input p-3.5 rounded-xl flex justify-between items-center">
                         <div>
                             <div class="text-white font-bold">Reentrancy Protection Guard</div>
-                            <div class="text-slate-400">OpenZeppelin ReentrancyGuard standard validated on Router &amp; Vault contracts</div>
+                            <div class="text-slate-400">No live Router or Vault contracts are wired into this frontend demo.</div>
                         </div>
-                        <span id="auditStatus1" class="text-cyber-green font-bold">PASSED</span>
+                        <span id="auditStatus1" class="text-amber-300 font-bold">NOT VERIFIED</span>
                     </div>
                     <div class="glass-input p-3.5 rounded-xl flex justify-between items-center">
                         <div>
                             <div class="text-white font-bold">Oracle Manipulation Resistance</div>
-                            <div class="text-slate-400">Chainlink TWAP + Pyth Network Dual-Feeds enabled with 1.5% deviation circuit breaker</div>
+                            <div class="text-slate-400">No live oracle feeds or on-chain execution are wired into this frontend demo.</div>
                         </div>
-                        <span id="auditStatus2" class="text-cyber-green font-bold">PASSED</span>
+                        <span id="auditStatus2" class="text-amber-300 font-bold">NOT VERIFIED</span>
                     </div>
                     <div class="glass-input p-3.5 rounded-xl flex justify-between items-center">
                         <div>
                             <div class="text-white font-bold">Front-running &amp; Sandwich Mitigation</div>
-                            <div class="text-slate-400">Private Mempool RPC via Flashbots Protect &amp; strict minAmountOut slippage checks</div>
+                            <div class="text-slate-400">No live transaction submission or slippage enforcement is implemented here.</div>
                         </div>
-                        <span id="auditStatus3" class="text-cyber-green font-bold">PROTECTED</span>
+                        <span id="auditStatus3" class="text-amber-300 font-bold">NOT IMPLEMENTED</span>
                     </div>
                     <div class="glass-input p-3.5 rounded-xl flex justify-between items-center">
                         <div>
                             <div class="text-white font-bold">Client DOM &amp; Export Sanitization</div>
-                            <div class="text-slate-400">Zero host-injected token leaks, XSS-safe textContent toasts, and pinned CDN dependencies</div>
+                            <div class="text-slate-400">Toast output uses textContent; third-party CDN scripts still require supply-chain review.</div>
                         </div>
-                        <span id="auditStatus4" class="text-cyber-cyan font-bold">VERIFIED</span>
+                        <span id="auditStatus4" class="text-amber-300 font-bold">PARTIAL</span>
                     </div>
                     <div class="glass-input p-3.5 rounded-xl flex justify-between items-center">
                         <div>
                             <div class="text-white font-bold">ERC-20 Router Allowance Guard</div>
-                            <div id="allowanceStatusText" class="text-slate-400">Exact-amount approval enforced (No infinite uint256 approvals)</div>
+                            <div id="allowanceStatusText" class="text-slate-400">No on-chain approvals are created or revoked by this demo.</div>
                         </div>
                         <button onclick="revokeRouterAllowances()" class="bg-cyber-red/20 hover:bg-cyber-red/30 text-cyber-red border border-cyber-red/40 px-2.5 py-1 rounded text-[11px] font-bold">
-                            Revoke Approvals
+                            Demo: no on-chain revoke
                         </button>
                     </div>
                 </div>
@@ -1104,7 +1104,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-base text-white">Connect Wallet</h3>
-                        <p class="text-xs text-slate-400">Select an institutional web3 provider</p>
+                        <p class="text-xs text-slate-400">Test wallet only. Never enter a seed phrase or approve unknown requests.</p>
                     </div>
                 </div>
                 <button onclick="toggleWalletModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition">
@@ -1146,7 +1146,7 @@
             </div>
 
             <div class="pt-2 border-t border-white/10 text-center text-[11px] text-slate-500">
-                By connecting, you agree to ApexDEX Institutional Terms of Service.
+                Connecting shares only your public address and network. This demo does not submit transactions or signatures.
             </div>
         </div>
     </div>
@@ -1957,8 +1957,19 @@
             modal.classList.toggle('flex');
         }
 
+        const TRUSTED_WALLET_HOSTS = Object.freeze(new Set(['dexapex.vercel.app']));
+
+        function isWalletConnectionAllowed() {
+            if (window.location.protocol !== 'https:' || !TRUSTED_WALLET_HOSTS.has(window.location.hostname)) {
+                triggerToast('Wallet connection is disabled on this preview or untrusted domain. Use https://dexapex.vercel.app.', 'error');
+                return false;
+            }
+            return true;
+        }
+
         async function connectWallet(providerName) {
             if (providerName === 'MetaMask') {
+                if (!isWalletConnectionAllowed()) return;
                 if (!window.ethereum) {
                     triggerToast('Security Error: No injected Web3 wallet found. Use MetaMask or select Institutional Sandbox.', 'error');
                     return;
@@ -2013,7 +2024,7 @@
             state.walletProviderType = null;
             syncWalletUI();
             toggleWalletModal();
-            triggerToast('Wallet disconnected safely.', 'info');
+            triggerToast('Local wallet session cleared. Revoke provider access from your wallet extension settings.', 'info');
         }
 
         function syncWalletUI() {
@@ -3901,19 +3912,19 @@
                 status4.textContent = hasInjected === 0 ? 'VERIFIED CLEAN' : 'SANDBOX PREVIEW';
             }
             playExecutionSound('ok');
-            triggerToast('Security Audit Passed: ReentrancyGuard, Dual-Oracle TWAP, and XSS Guards verified.');
+            triggerToast('Demo check only: no live contract audit was performed.', 'warning');
         }
 
         function testEip712Signature() {
             playExecutionSound('ok');
-            triggerToast('EIP-712 Typed Data Permit Domain Verified (ApexDEXRouter v4, ChainId: 42161)');
+            triggerToast('Demo only: no EIP-712 signature was requested or produced.', 'warning');
         }
 
         function revokeRouterAllowances() {
             var el = document.getElementById('allowanceStatusText');
-            if (el) el.textContent = 'All active router token allowances reset to 0.00 (Revoked)';
+            if (el) el.textContent = 'Demo only: no on-chain allowances were changed.';
             playExecutionSound('ok');
-            triggerToast('All ERC-20 router allowances revoked safely.');
+            triggerToast('Demo only: revoke approvals in your wallet or block explorer.', 'warning');
         }
 
         // ==================== INITIALIZATION ====================
