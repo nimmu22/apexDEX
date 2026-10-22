@@ -264,15 +264,6 @@
                     <button onclick="switchTab('swap')" id="nav-swap" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 font-sans">
                         <i data-lucide="arrow-left-right" class="w-3.5 h-3.5"></i> Swap
                     </button>
-                    <button onclick="switchTab('flashloan')" id="nav-flashloan" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 font-sans">
-                        <i data-lucide="zap" class="w-3.5 h-3.5 text-cyber-gold"></i> MEV Arbitrage
-                    </button>
-                    <button onclick="switchTab('pools')" id="nav-pools" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 font-sans">
-                        <i data-lucide="layers" class="w-3.5 h-3.5"></i> Concentrated LP
-                    </button>
-                    <button onclick="switchTab('security')" id="nav-security" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 font-sans">
-                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-cyber-cyan"></i> Vault Inspector
-                    </button>
                     <button onclick="switchTab('performance')" id="nav-performance" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 font-sans">
                         <i data-lucide="bar-chart-3" class="w-3.5 h-3.5 text-cyber-green"></i> Performance
                     </button>
@@ -308,15 +299,6 @@
             </button>
             <button onclick="switchTab('swap')" id="nav-mobile-swap" class="nav-mobile-btn text-slate-400 px-2.5 py-1 rounded flex items-center gap-1 whitespace-nowrap">
                 <i data-lucide="arrow-left-right" class="w-3 h-3"></i> Swap
-            </button>
-            <button onclick="switchTab('flashloan')" id="nav-mobile-flashloan" class="nav-mobile-btn text-slate-400 px-2.5 py-1 rounded flex items-center gap-1 whitespace-nowrap">
-                <i data-lucide="zap" class="w-3 h-3 text-cyber-gold"></i> MEV
-            </button>
-            <button onclick="switchTab('pools')" id="nav-mobile-pools" class="nav-mobile-btn text-slate-400 px-2.5 py-1 rounded flex items-center gap-1 whitespace-nowrap">
-                <i data-lucide="layers" class="w-3 h-3"></i> Pools
-            </button>
-            <button onclick="switchTab('security')" id="nav-mobile-security" class="nav-mobile-btn text-slate-400 px-2.5 py-1 rounded flex items-center gap-1 whitespace-nowrap">
-                <i data-lucide="shield-check" class="w-3 h-3 text-cyber-cyan"></i> Security
             </button>
             <button onclick="switchTab('performance')" id="nav-mobile-performance" class="nav-mobile-btn text-slate-400 px-2.5 py-1 rounded flex items-center gap-1 whitespace-nowrap">
                 <i data-lucide="bar-chart-3" class="w-3 h-3 text-cyber-green"></i> Stats
@@ -1257,6 +1239,7 @@
             pnlMode: false,
             pnlDrag: null,
             depthTimer: null,
+            orderBookInFlight: false,
             positions: [],
             openOrders: [],
             history: [],
@@ -3202,10 +3185,14 @@
         function initOrderBookStream() {
             if (state.depthTimer) clearInterval(state.depthTimer);
             refreshOrderBook();
-            state.depthTimer = setInterval(refreshOrderBook, 2200);
+            state.depthTimer = setInterval(function() {
+                if (!document.hidden) refreshOrderBook();
+            }, 3000);
         }
 
         function refreshOrderBook() {
+            if (state.orderBookInFlight) return;
+            state.orderBookInFlight = true;
             var symbol = getBinanceSymbol(state.activePair);
             fetch('https://api.binance.com/api/v3/depth?symbol=' + symbol + '&limit=10')
                 .then(function(r) { return r.json(); })
@@ -3220,6 +3207,9 @@
                 })
                 .catch(function() {
                     renderSyntheticOrderBook();
+                })
+                .finally(function() {
+                    state.orderBookInFlight = false;
                 });
         }
 
@@ -3256,9 +3246,7 @@
                 askRows.push({ price: p, size: sz, totalK: cumAsk });
             });
             state.lastAsks = askRows.slice();
-            askRows.reverse().forEach(function(r) {
-                asksContainer.appendChild(createOrderBookRow(r.price, r.size, r.totalK, 'ask', decimals));
-            });
+            updateOrderBookRows(asksContainer, askRows.reverse(), 'ask', decimals);
 
             var cumBid = 0;
             var totalBidQty = 0;
@@ -3269,8 +3257,8 @@
                 totalBidQty += bsz;
                 cumBid += (bp * bsz) / 1000;
                 bidRows.push({ price: bp, size: bsz, totalK: cumBid });
-                bidsContainer.appendChild(createOrderBookRow(bp, bsz, cumBid, 'bid', decimals));
             });
+            updateOrderBookRows(bidsContainer, bidRows, 'bid', decimals);
             state.lastBids = bidRows;
 
             // Update Bid/Ask Imbalance Pressure Bar
@@ -3284,11 +3272,13 @@
             if (askPctEl) askPctEl.textContent = 'A: ' + askPct + '%';
             if (bidBarEl) bidBarEl.style.width = bidPct + '%';
 
-            drawMarketDepthCanvas();
+            var depthView = document.getElementById('depthViewContainer');
+            if (depthView && !depthView.classList.contains('hidden')) drawMarketDepthCanvas();
 
-            // Append recent trade entry
+            // Append recent trade entry only while the Trades view is visible.
             var tradesList = document.getElementById('marketTradesList');
-            if (tradesList) {
+            var tradesView = document.getElementById('tradesViewContainer');
+            if (tradesList && tradesView && !tradesView.classList.contains('hidden')) {
                 var isBuy = Math.random() >= 0.48;
                 var tradeRow = document.createElement('div');
                 tradeRow.className = 'grid grid-cols-3 text-[11px] py-0.5';
@@ -3316,6 +3306,8 @@
         }
 
         function drawMarketDepthCanvas() {
+            var depthView = document.getElementById('depthViewContainer');
+            if (depthView && depthView.classList.contains('hidden')) return;
             var canvas = document.getElementById('depthChartCanvas');
             if (!canvas || !state.lastBids.length || !state.lastAsks.length) return;
             var rect = canvas.parentElement.getBoundingClientRect();
@@ -3366,15 +3358,13 @@
             ctx.stroke();
         }
 
-        function createOrderBookRow(price, size, totalK, side, decimals) {
-            var row = document.createElement('div');
+        function updateOrderBookRow(row, price, size, totalK, side, decimals) {
             var depthPct = Math.min(100, Math.round((size / 2.0) * 100));
             var bgGrad = side === 'ask'
                 ? 'linear-gradient(to left, rgba(239, 68, 68, 0.16) ' + depthPct + '%, transparent ' + depthPct + '%)'
                 : 'linear-gradient(to left, rgba(16, 185, 129, 0.16) ' + depthPct + '%, transparent ' + depthPct + '%)';
 
             row.style.background = bgGrad;
-            row.className = 'grid grid-cols-3 text-[11px] px-1 py-0.5 rounded cursor-pointer hover:bg-white/10 transition';
             row.onclick = function() {
                 setOrderType('limit');
                 var limitInput = document.getElementById('limitPriceInput');
@@ -3384,22 +3374,40 @@
                 }
             };
 
+            row.children[0].className = side === 'ask' ? 'text-cyber-red font-semibold' : 'text-cyber-green font-semibold';
+            row.children[0].textContent = price.toFixed(decimals);
+            row.children[1].textContent = size.toFixed(3);
+            row.children[2].textContent = totalK.toFixed(1) + 'K';
+        }
+
+        function createOrderBookRow(price, size, totalK, side, decimals) {
+            var row = document.createElement('div');
+            row.className = 'grid grid-cols-3 text-[11px] px-1 py-0.5 rounded cursor-pointer hover:bg-white/10 transition';
             var pEl = document.createElement('span');
-            pEl.className = side === 'ask' ? 'text-cyber-red font-semibold' : 'text-cyber-green font-semibold';
-            pEl.textContent = price.toFixed(decimals);
-
             var sEl = document.createElement('span');
-            sEl.className = 'text-right text-slate-300';
-            sEl.textContent = size.toFixed(3);
-
             var tEl = document.createElement('span');
+            sEl.className = 'text-right text-slate-300';
             tEl.className = 'text-right text-slate-400';
-            tEl.textContent = totalK.toFixed(1) + 'K';
-
             row.appendChild(pEl);
             row.appendChild(sEl);
             row.appendChild(tEl);
+            updateOrderBookRow(row, price, size, totalK, side, decimals);
             return row;
+        }
+
+        function updateOrderBookRows(container, rows, side, decimals) {
+            for (var i = 0; i < rows.length; i++) {
+                var item = rows[i];
+                var row = container.children[i];
+                if (!row) {
+                    container.appendChild(createOrderBookRow(item.price, item.size, item.totalK, side, decimals));
+                } else {
+                    updateOrderBookRow(row, item.price, item.size, item.totalK, side, decimals);
+                }
+            }
+            while (container.children.length > rows.length) {
+                container.removeChild(container.lastChild);
+            }
         }
 
         // ==================== PAIR & TIMEFRAME CONTROLS ====================
