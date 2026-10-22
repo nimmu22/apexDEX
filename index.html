@@ -3483,7 +3483,9 @@
                 action: 'PARTIAL CLOSE 50% ' + (pos.side === 'buy' ? 'LONG' : 'SHORT'),
                 price: mark,
                 notional: pos.notional,
-                pnlText: (realizedPnl >= 0 ? '+
+                pnlText: (realizedPnl >= 0 ? '+$' : '-$') + Math.abs(realizedPnl).toFixed(2) + ' USDC',
+                realizedPnl: realizedPnl
+            });
 
             playExecutionSound('ok');
             savePortfolioState();
