@@ -3238,8 +3238,8 @@
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     if (data && Array.isArray(data.asks) && Array.isArray(data.bids)) {
-                        var asks = data.asks.slice(0, 7).map(function(a) { return [parseFloat(a[0]), parseFloat(a[1])]; });
-                        var bids = data.bids.slice(0, 7).map(function(b) { return [parseFloat(b[0]), parseFloat(b[1])]; });
+                        var asks = data.asks.slice(0, 10).map(function(a) { return [parseFloat(a[0]), parseFloat(a[1])]; });
+                        var bids = data.bids.slice(0, 10).map(function(b) { return [parseFloat(b[0]), parseFloat(b[1])]; });
                         renderOrderBookDOM(asks, bids);
                     } else {
                         renderSyntheticOrderBook();
@@ -3258,7 +3258,7 @@
             var tick = mid * 0.00018;
             var asks = [];
             var bids = [];
-            for (var i = 1; i <= 7; i++) {
+            for (var i = 1; i <= 10; i++) {
                 var previousAsk = state.lastAsks[i - 1];
                 var previousBid = state.lastBids[i - 1];
                 var askSize = previousAsk ? Math.max(0.15, previousAsk.size + (Math.random() - 0.5) * 0.12) : Math.random() * 1.2 + 0.4;
@@ -3676,14 +3676,37 @@
                 ? parseFloat(limitInput.value)
                 : marketPrice;
 
+            var tpEl = document.getElementById('tpInput');
+            var slEl = document.getElementById('slInput');
+            var tpVal = parseFloat(tpEl && tpEl.value) || null;
+            var slVal = parseFloat(slEl && slEl.value) || null;
+            var riskReference = state.orderType === 'market' ? marketPrice : targetPrice;
+            var riskError = '';
+
+            if (tpEl && tpEl.value.trim() && (!Number.isFinite(tpVal) || tpVal <= 0)) {
+                riskError = 'Take profit must be a positive price.';
+            } else if (slEl && slEl.value.trim() && (!Number.isFinite(slVal) || slVal <= 0)) {
+                riskError = 'Stop loss must be a positive price.';
+            } else if (state.orderSide === 'buy' && tpVal !== null && tpVal <= riskReference) {
+                riskError = 'For a long, take profit must be above the entry price.';
+            } else if (state.orderSide === 'buy' && slVal !== null && slVal >= riskReference) {
+                riskError = 'For a long, stop loss must be below the entry price.';
+            } else if (state.orderSide === 'sell' && tpVal !== null && tpVal >= riskReference) {
+                riskError = 'For a short, take profit must be below the entry price.';
+            } else if (state.orderSide === 'sell' && slVal !== null && slVal <= riskReference) {
+                riskError = 'For a short, stop loss must be above the entry price.';
+            }
+
+            if (riskError) {
+                triggerToast(riskError, 'error');
+                return;
+            }
+
             var notional = amount * state.leverage;
             var fee = notional * 0.0005;
             state.userBalance = Math.max(0, state.userBalance - amount - fee);
             state.tokenBalances.USDC = state.userBalance;
             updateBalanceDisplay();
-
-            var tpVal = parseFloat(document.getElementById('tpInput').value) || null;
-            var slVal = parseFloat(document.getElementById('slInput').value) || null;
 
             playExecutionSound('ok');
 
