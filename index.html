@@ -1776,10 +1776,16 @@
 
         var TIMEFRAME_SECONDS = {
             '1m': 60,
+            '3m': 180,
             '5m': 300,
             '15m': 900,
+            '30m': 1800,
             '1h': 3600,
-            '4h': 14400
+            '2h': 7200,
+            '4h': 14400,
+            '6h': 21600,
+            '8h': 28800,
+            '12h': 43200
         };
 
         // ==================== SYNTHESIZED WEB AUDIO SFX ====================
@@ -2739,6 +2745,15 @@
                 : chart.addSeries(LightweightCharts.LineSeries, options);
         }
 
+        function fitPrimaryChartContent() {
+            var chart = charts[0];
+            if (!chart) return;
+            try {
+                chart.priceScale('right').applyOptions({ autoScale: true });
+                chart.timeScale().fitContent();
+            } catch (e) {}
+        }
+
         function initCharts() {
             var container1 = document.getElementById('tvChartContainer1');
             if (!container1 || typeof LightweightCharts === 'undefined') return;
@@ -2946,6 +2961,7 @@
                     state.candles = candles;
                     if (candlestickSeriesArr[0]) candlestickSeriesArr[0].setData(candles);
                     if (volumeSeriesArr[0]) volumeSeriesArr[0].setData(vols);
+                    fitPrimaryChartContent();
                     updateTechnicalOverlays();
                     syncPositionPriceLines();
                     updateLiveCandleReadout();
@@ -2997,6 +3013,7 @@
             state.candles = candles;
             if (candlestickSeriesArr[0]) candlestickSeriesArr[0].setData(candles);
             if (volumeSeriesArr[0]) volumeSeriesArr[0].setData(vols);
+            fitPrimaryChartContent();
             updateTechnicalOverlays();
             syncPositionPriceLines();
             updateLiveCandleReadout();
