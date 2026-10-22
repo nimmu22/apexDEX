@@ -1245,6 +1245,7 @@
             chainId: 42161,
             ws: null,
             pollTimer: null,
+            wsConnectTimer: null,
             marketUiFrame: null,
             crosshairActive: false,
             depthTimer: null,
@@ -2643,6 +2644,18 @@
         }
 
         // ==================== BINANCE HISTORY & REAL-TIME STREAMING ====================
+        function fetchJsonWithTimeout(url, timeoutMs) {
+            return Promise.race([
+                fetch(url).then(function(res) {
+                    if (!res.ok) throw new Error('Market data request failed: ' + res.status);
+                    return res.json();
+                }),
+                new Promise(function(_, reject) {
+                    setTimeout(function() { reject(new Error('Market data request timed out')); }, timeoutMs);
+                })
+            ]);
+        }
+
         function getBinanceSymbol(pair) {
             var coin = coinUniverse.find(function(item) { return item.pair === pair; });
             if (coin && coin.binanceSymbol) return coin.binanceSymbol;
@@ -2653,9 +2666,12 @@
         function fetchKlinesHistory() {
             var symbol = getBinanceSymbol(state.activePair);
 
+            // Render a usable chart immediately; replace it with exchange candles when available.
+            if (!state.candles.length) generateSyntheticCandles();
+
             Promise.all([
-                fetch('https://api.binance.com/api/v3/klines?symbol=' + symbol + '&interval=' + state.timeframe + '&limit=150').then(function(r) { return r.json(); }),
-                fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=' + symbol).then(function(r) { return r.json(); })
+                fetchJsonWithTimeout('https://api.binance.com/api/v3/klines?symbol=' + symbol + '&interval=' + state.timeframe + '&limit=150', 5000),
+                fetchJsonWithTimeout('https://api.binance.com/api/v3/ticker/24hr?symbol=' + symbol, 5000)
             ]).then(function(results) {
                 var klineData = results[0];
                 var tickerData = results[1];
@@ -2731,6 +2747,10 @@
         }
 
         function initPriceStream() {
+            if (state.wsConnectTimer) {
+                clearTimeout(state.wsConnectTimer);
+                state.wsConnectTimer = null;
+            }
             if (state.ws) {
                 try { state.ws.close(); } catch (e) {}
                 state.ws = null;
@@ -2746,6 +2766,10 @@
                 state.ws = new WebSocket('wss://stream.binance.com:9443/ws/' + streamSymbol + '@ticker');
 
                 state.ws.onopen = function() {
+                    if (state.wsConnectTimer) {
+                        clearTimeout(state.wsConnectTimer);
+                        state.wsConnectTimer = null;
+                    }
                     var statusEl = document.getElementById('streamStatus');
                     if (statusEl) statusEl.textContent = 'LIVE WebSocket';
                 };
@@ -2762,14 +2786,28 @@
                 };
 
                 state.ws.onerror = function() {
+                    if (state.wsConnectTimer) {
+                        clearTimeout(state.wsConnectTimer);
+                        state.wsConnectTimer = null;
+                    }
                     fallbackToPolling();
                 };
+
+                state.wsConnectTimer = setTimeout(function() {
+                    if (state.ws && state.ws.readyState === WebSocket.CONNECTING) {
+                        fallbackToPolling();
+                    }
+                }, 5000);
             } catch (e) {
                 fallbackToPolling();
             }
         }
 
         function fallbackToPolling() {
+            if (state.wsConnectTimer) {
+                clearTimeout(state.wsConnectTimer);
+                state.wsConnectTimer = null;
+            }
             if (state.ws) {
                 try { state.ws.close(); } catch (e) {}
                 state.ws = null;
@@ -2780,8 +2818,7 @@
 
             var fetchTicker = function() {
                 var symbol = getBinanceSymbol(state.activePair);
-                fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=' + symbol)
-                    .then(function(res) { return res.json(); })
+                fetchJsonWithTimeout('https://api.binance.com/api/v3/ticker/24hr?symbol=' + symbol, 5000)
                     .then(function(data) {
                         processPriceData(
                             parseFloat(data.lastPrice),
