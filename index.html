@@ -423,6 +423,9 @@
                         <button onclick="togglePositionLinesOnChart()" id="tool-poslines" title="Show/Hide Active Position Entry/TP/SL Lines" class="tool-btn active p-2 rounded-lg text-slate-400 hover:text-white transition">
                             <i data-lucide="layers" class="w-4 h-4"></i>
                         </button>
+                        <button onclick="togglePnlMode()" id="tool-pnl" title="PNL: drag an entry line to set TP or SL" class="tool-btn p-2 rounded-lg text-slate-400 hover:text-white transition">
+                            <i data-lucide="target" class="w-4 h-4"></i>
+                        </button>
                         <button onclick="resetChartZoom()" id="tool-reset" title="Fit / Reset Chart Content" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition">
                             <i data-lucide="maximize-2" class="w-4 h-4"></i>
                         </button>
@@ -472,8 +475,9 @@
                                 <div class="w-full h-full relative flex flex-col min-h-[415px]">
                                     <div class="w-full h-full flex-1 relative min-h-[415px]">
                                     <div id="tvChartContainer1" class="w-full h-full relative min-h-[415px]"></div>
-                                    <div id="chartCandleCountdown" class="absolute right-2 z-10 pointer-events-none text-[11px] font-mono font-semibold text-cyber-gold drop-shadow-[0_0_4px_rgba(245,158,11,.75)]">
-                                        <strong id="candleCountdown">00:59</strong>
+                                    <div id="chartCandleCountdown" class="absolute right-0 z-10 pointer-events-none flex flex-col items-end rounded-l bg-cyber-red px-2 py-1 text-[10px] font-mono font-bold leading-tight text-white shadow-lg">
+                                        <strong id="currentPriceOverlayValue">$--</strong>
+                                        <span id="candleCountdown">00:59</span>
                                     </div>
                                 </div>
                                 </div>
@@ -1250,6 +1254,8 @@
             wsConnectTimer: null,
             marketUiFrame: null,
             crosshairActive: false,
+            pnlMode: false,
+            pnlDrag: null,
             depthTimer: null,
             positions: [],
             openOrders: [],
@@ -1774,6 +1780,7 @@
         var emaSeriesArr = [];
         var bbUpperSeriesArr = [];
         var bbLowerSeriesArr = [];
+        var executionPathSeriesArr = [];
 
         var TIMEFRAME_SECONDS = {
             '1m': 60,
@@ -1915,6 +1922,29 @@
             el.style.bottom = 'auto';
         }
 
+        function positionCandleCountdown() {
+            var el = document.getElementById('chartCandleCountdown');
+            var chartWrap = el ? el.parentElement : null;
+            var series = candlestickSeriesArr[0];
+            var priceEl = document.getElementById('currentPriceOverlayValue');
+            if (!el || !chartWrap || !series || typeof series.priceToCoordinate !== 'function') return;
+
+            var price = state.prices[state.activePair] || (state.candles.length ? state.candles[state.candles.length - 1].close : null);
+            if (price != null && priceEl) {
+                var decimals = price < 10 ? 4 : 2;
+                priceEl.textContent = '$' + Number(price).toLocaleString('en-US', {
+                    minimumFractionDigits: decimals,
+                    maximumFractionDigits: decimals
+                });
+            }
+            var y = price == null ? null : series.priceToCoordinate(price);
+            if (y == null || !Number.isFinite(y)) return;
+
+            var maxTop = Math.max(4, chartWrap.clientHeight - 34);
+            el.style.top = Math.max(4, Math.min(maxTop, y - 14)) + 'px';
+            el.style.bottom = 'auto';
+        }
+
         function updateCandleCountdown() {
             var el = document.getElementById('candleCountdown');
             if (!el) return;
@@ -1941,11 +1971,62 @@
                     time: Math.floor(Number(item.chartTime) / step) * step,
                     position: isSell ? 'aboveBar' : 'belowBar',
                     color: isSell ? '#EF4444' : '#10B981',
-                    shape: isSell ? 'arrowDown' : 'arrowUp',
-                    text: action.indexOf('CLOSE') !== -1 ? 'CLOSE' : (isSell ? 'SELL' : 'BUY')
+                    shape: isSell ? 'arrowDown' : 'arrowUp'
                 };
             }).filter(Boolean).sort(function(a, b) { return a.time - b.time; });
             series.setMarkers(markers);
+        }
+
+        function renderExecutionPaths() {
+            if (!charts[0] || typeof charts[0].removeSeries !== 'function') return;
+
+            executionPathSeriesArr.forEach(function(series) {
+                try { charts[0].removeSeries(series); } catch (e) {}
+            });
+            executionPathSeriesArr = [];
+
+            var step = TIMEFRAME_SECONDS[state.timeframe] || 60;
+            var fills = state.history.filter(function(item) {
+                return item.pair === state.activePair && Number.isFinite(Number(item.chartTime));
+            }).slice().sort(function(a, b) {
+                return Number(a.chartTime) - Number(b.chartTime);
+            });
+            var opens = [];
+
+            fills.forEach(function(item) {
+                var action = String(item.action || '').toUpperCase();
+                var isClose = action.indexOf('CLOSE') !== -1 || action.indexOf('PARTIAL') !== -1;
+                var isOpen = action.indexOf('OPEN') !== -1 || action.indexOf('FILLED') !== -1;
+                if (isOpen) {
+                    opens.push(item);
+                    return;
+                }
+                if (!isClose) return;
+
+                var openIndex = -1;
+                for (var i = opens.length - 1; i >= 0; i--) {
+                    if (opens[i].pair === item.pair) { openIndex = i; break; }
+                }
+                if (openIndex === -1) return;
+
+                var open = opens.splice(openIndex, 1)[0];
+                var openTime = Math.floor(Number(open.chartTime) / step) * step;
+                var closeTime = Math.floor(Number(item.chartTime) / step) * step;
+                if (closeTime <= openTime) closeTime = openTime + Math.max(1, step);
+                var path = createHelperSeries(charts[0], 'line', {
+                    color: Number(item.realizedPnl) >= 0 ? '#10B981' : '#EF4444',
+                    lineWidth: 2,
+                    lineStyle: 2,
+                    priceLineVisible: false,
+                    lastValueVisible: false,
+                    crosshairMarkerVisible: false
+                });
+                path.setData([
+                    { time: openTime, value: Number(open.price) },
+                    { time: closeTime, value: Number(item.price) }
+                ]);
+                executionPathSeriesArr.push(path);
+            });
         }
 
         function renderExecutionFeed() {
@@ -2395,6 +2476,92 @@
             triggerToast(state.showPositionLines ? 'Position Entry/TP/SL lines shown on chart' : 'Position lines hidden');
         }
 
+        function togglePnlMode() {
+            state.pnlMode = !state.pnlMode;
+            var btn = document.getElementById('tool-pnl');
+            if (btn) btn.classList.toggle('active', state.pnlMode);
+            if (!state.pnlMode) state.pnlDrag = null;
+            triggerToast(state.pnlMode
+                ? 'PNL mode on: drag an entry line up for TP or down for SL'
+                : 'PNL mode off');
+        }
+
+        function updateDraggedRiskPrice(price) {
+            if (!state.pnlDrag || !Number.isFinite(price)) return;
+            var pos = state.positions.find(function(item) { return item.id === state.pnlDrag.posId; });
+            if (!pos || pos.pair !== state.activePair) return;
+
+            var entry = Number(pos.entryPrice);
+            if (!Number.isFinite(entry) || entry <= 0) return;
+            if (!state.pnlDrag.kind) {
+                var isLong = pos.side === 'buy';
+                state.pnlDrag.kind = (isLong ? price >= entry : price <= entry) ? 'tp' : 'sl';
+            }
+
+            var minimumDistance = Math.max(entry * 0.00005, entry < 10 ? 0.0001 : 0.01);
+            if (state.pnlDrag.kind === 'tp') {
+                pos.tp = pos.side === 'buy'
+                    ? Math.max(entry + minimumDistance, price)
+                    : Math.min(entry - minimumDistance, price);
+            } else {
+                pos.sl = pos.side === 'buy'
+                    ? Math.min(entry - minimumDistance, price)
+                    : Math.max(entry + minimumDistance, price);
+            }
+
+            syncPositionPriceLines();
+            renderPositionsBlotter();
+            updateAccountEquityTelemetry();
+        }
+
+        function setupPnlDragInteractions(container, series) {
+            if (!container || !series || typeof series.coordinateToPrice !== 'function') return;
+
+            container.addEventListener('mousedown', function(event) {
+                if (!state.pnlMode || !state.positions.length) return;
+                var rect = container.getBoundingClientRect();
+                var y = event.clientY - rect.top;
+                var price = series.coordinateToPrice(y);
+                if (!Number.isFinite(price)) return;
+
+                var candidates = state.positions.filter(function(pos) { return pos.pair === state.activePair; });
+                var selected = null;
+                var nearestPx = Infinity;
+                candidates.forEach(function(pos) {
+                    [pos.entryPrice, pos.tp, pos.sl].forEach(function(level) {
+                        if (!Number.isFinite(Number(level))) return;
+                        var levelY = series.priceToCoordinate(Number(level));
+                        if (levelY == null) return;
+                        var distance = Math.abs(levelY - y);
+                        if (distance < nearestPx) {
+                            nearestPx = distance;
+                            selected = pos;
+                        }
+                    });
+                });
+                if (!selected || nearestPx > 18) return;
+
+                state.pnlDrag = { posId: selected.id, kind: null };
+                container.style.cursor = 'ns-resize';
+                event.preventDefault();
+            });
+
+            window.addEventListener('mousemove', function(event) {
+                if (!state.pnlDrag) return;
+                var rect = container.getBoundingClientRect();
+                var price = series.coordinateToPrice(event.clientY - rect.top);
+                updateDraggedRiskPrice(price);
+            });
+
+            window.addEventListener('mouseup', function() {
+                if (!state.pnlDrag) return;
+                savePortfolioState();
+                triggerToast('PNL risk line updated. TP/SL saved to this paper position.', 'info');
+                state.pnlDrag = null;
+                container.style.cursor = '';
+            });
+        }
+
         function syncPositionPriceLines() {
             if (!candlestickSeriesArr[0]) return;
             state.positionChartLines.forEach(function(l) {
@@ -2598,7 +2765,12 @@
                 downColor: '#EF4444',
                 borderVisible: false,
                 wickUpColor: '#10B981',
-                wickDownColor: '#EF4444'
+                wickDownColor: '#EF4444',
+                lastValueVisible: false,
+                priceLineVisible: true,
+                priceLineColor: '#EF4444',
+                priceLineWidth: 1,
+                priceLineStyle: 2
             });
 
             var volSeries = createHelperSeries(chart1, 'histogram', {
@@ -2630,6 +2802,8 @@
                     readout.textContent = 'O: ' + bar.open.toFixed(2) + ' H: ' + bar.high.toFixed(2) + ' L: ' + bar.low.toFixed(2) + ' C: ' + bar.close.toFixed(2);
                 }
             });
+
+            setupPnlDragInteractions(container1, series1);
 
             charts.push(chart1);
             candlestickSeriesArr.push(series1);
@@ -2769,6 +2943,7 @@
                     syncPositionPriceLines();
                     updateLiveCandleReadout();
                     renderExecutionMarkers();
+                    renderExecutionPaths();
                     positionCandleCountdown();
                 }
 
@@ -3893,6 +4068,7 @@
             });
             renderExecutionFeed();
             renderExecutionMarkers();
+            renderExecutionPaths();
         }
 
         // ==================== DYNAMIC AMM SWAP ENGINE ====
@@ -4200,6 +4376,7 @@
             updateOrderPreview();
             renderExecutionFeed();
             renderExecutionMarkers();
+            renderExecutionPaths();
             renderPositionsBlotter();
             renderOpenOrdersBlotter();
             renderHistoryBlotter();
