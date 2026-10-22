@@ -438,7 +438,6 @@
                                 <div class="flex items-center gap-1.5 font-bold text-white bg-cyber-900 px-2.5 py-1 rounded border border-white/10">
                                     <span id="tvSymbolLabel">BINANCE:BTCUSDT</span>
                                     <span id="tvBadge" class="text-[10px] bg-cyber-cyan/20 text-cyber-cyan px-1.5 py-0.5 rounded">1m</span>
-                                    <span class="text-[10px] text-slate-400">Candle closes <strong id="candleCountdown" class="text-cyber-gold">00:59</strong></span>
                                 </div>
                                 <span id="ohlcReadout" class="hidden sm:inline text-[11px] text-slate-400">O: -- H: -- L: -- C: --</span>
                                 <span id="rsiReadout" class="text-[10px] bg-cyber-purple/20 text-purple-300 border border-cyber-purple/30 px-1.5 py-0.5 rounded">RSI(14): 54.2</span>
@@ -471,7 +470,12 @@
                             <div id="chartGridWrapper" class="w-full h-full flex-1 grid grid-cols-1 gap-2 min-h-[415px]">
                                 <!-- Primary Chart -->
                                 <div class="w-full h-full relative flex flex-col min-h-[415px]">
-                                    <div id="tvChartContainer1" class="w-full h-full flex-1 relative min-h-[415px]"></div>
+                                    <div id="tvChartContainer1" class="w-full h-full flex-1 relative min-h-[415px]">
+                                    <div id="chartCandleCountdown" class="absolute bottom-2 right-2 z-10 pointer-events-none rounded bg-cyber-950/85 border border-white/10 px-2 py-1 text-[10px] font-mono shadow-lg">
+                                        <span class="text-slate-400">Candle closes</span>
+                                        <strong id="candleCountdown" class="ml-1 text-cyber-gold">00:59</strong>
+                                    </div>
+                                </div>
                                 </div>
                                 <!-- Secondary Split Chart (Hidden in 1x1 mode) -->
                                 <div id="secondChartPanel" class="hidden w-full h-full relative flex-col min-h-[415px] border-t xl:border-t-0 xl:border-l border-white/10 pl-0 xl:pl-2">
@@ -1240,6 +1244,8 @@
             chainId: 42161,
             ws: null,
             pollTimer: null,
+            marketUiFrame: null,
+            crosshairActive: false,
             depthTimer: null,
             positions: [],
             openOrders: [],
@@ -2541,9 +2547,15 @@
 
             chart1.subscribeCrosshairMove(function(param) {
                 var readout = document.getElementById('ohlcReadout');
-                if (!readout || !param || !param.time || !param.seriesData) return;
+                if (!readout) return;
+                if (!param || !param.time || !param.seriesData) {
+                    state.crosshairActive = false;
+                    updateLiveCandleReadout();
+                    return;
+                }
                 var bar = param.seriesData.get(series1);
                 if (bar) {
+                    state.crosshairActive = true;
                     readout.textContent = 'O: ' + bar.open.toFixed(2) + ' H: ' + bar.high.toFixed(2) + ' L: ' + bar.low.toFixed(2) + ' C: ' + bar.close.toFixed(2);
                 }
             });
@@ -2669,6 +2681,7 @@
                     if (volumeSeriesArr[0]) volumeSeriesArr[0].setData(vols);
                     updateTechnicalOverlays();
                     syncPositionPriceLines();
+                    updateLiveCandleReadout();
                 }
 
                 if (tickerData && tickerData.lastPrice) {
@@ -2788,6 +2801,26 @@
             state.pollTimer = setInterval(fetchTicker, 2000);
         }
 
+        function updateLiveCandleReadout() {
+            if (state.crosshairActive || !state.candles.length) return;
+            var readout = document.getElementById('ohlcReadout');
+            var candle = state.candles[state.candles.length - 1];
+            if (!readout || !candle) return;
+            readout.textContent = 'O: ' + candle.open.toFixed(2) + ' H: ' + candle.high.toFixed(2) + ' L: ' + candle.low.toFixed(2) + ' C: ' + candle.close.toFixed(2);
+        }
+
+        function scheduleMarketUiRefresh() {
+            if (state.marketUiFrame) return;
+            var schedule = window.requestAnimationFrame || function(callback) { return window.setTimeout(callback, 16); };
+            state.marketUiFrame = schedule(function() {
+                state.marketUiFrame = null;
+                updateOrderPreview();
+                renderPositionsBlotter();
+                updateAccountEquityTelemetry();
+                checkLpRangeStatus();
+            });
+        }
+
         function processPriceData(curPrice, priceChangePercent, highPrice, lowPrice, vol) {
             state.prices[state.activePair] = curPrice;
             updateTickerDisplay(curPrice, priceChangePercent, highPrice, lowPrice, vol);
@@ -2826,10 +2859,8 @@
 
             checkOpenOrdersFill(curPrice);
             evaluatePositionRiskTriggers();
-            updateOrderPreview();
-            renderPositionsBlotter();
-            updateAccountEquityTelemetry();
-            checkLpRangeStatus();
+            if (!state.crosshairActive) updateLiveCandleReadout();
+            scheduleMarketUiRefresh();
         }
 
         function updateTickerDisplay(price, change, high, low, vol) {
