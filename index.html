@@ -1,105 +1,621 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Single File Web Page</title>
-  <style>
-    :root {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --primary: #38bdf8;
-      --primary-hover: #0284c7;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ApexDEX Enterprise Terminal v4.0 - Live Trading</title>
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 1.5rem;
-    }
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    .card {
-      background-color: var(--card-bg);
-      padding: 2.5rem;
-      border-radius: 1rem;
-      max-width: 420px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
+    <!-- Libraries -->
+    <script src="https://unpkg.com/lucide@0.395.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js" crossorigin="anonymous"></script>
 
-    h1 {
-      font-size: 1.75rem;
-      margin-bottom: 0.75rem;
-    }
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            950: '#020617',
+                            900: '#070C1A',
+                            850: '#0F172A',
+                            800: '#1E293B',
+                            700: '#334155',
+                            green: '#10B981',
+                            red: '#EF4444',
+                            blue: '#3B82F6',
+                            cyan: '#06B6D4',
+                            purple: '#8B5CF6',
+                            gold: '#F59E0B'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        };
+    </script>
 
-    p {
-      color: var(--text-muted);
-      font-size: 1rem;
-      line-height: 1.5;
-      margin-bottom: 1.75rem;
-    }
+    <style>
+        body {
+            background-color: #020617;
+            color: #F8FAFC;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
 
-    button {
-      background-color: var(--primary);
-      color: #0f172a;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      transition: background-color 0.2s ease, transform 0.1s ease;
-    }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
 
-    button:hover {
-      background-color: var(--primary-hover);
-    }
+        .glass-input {
+            background: rgba(7, 12, 26, 0.90);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
 
-    button:active {
-      transform: scale(0.98);
-    }
+        .glass-input:focus-within {
+            border-color: #06B6D4;
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+        }
 
-    .counter-display {
-      margin-top: 1.5rem;
-      font-size: 1.125rem;
-      font-weight: 500;
-    }
-  </style>
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(7, 12, 26, 0.8);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.16);
+            border-radius: 3px;
+        }
+
+        .nav-btn {
+            color: #94A3B8;
+            transition: all 0.2s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-btn:hover {
+            color: #F8FAFC;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .nav-btn.active {
+            color: #06B6D4;
+            background: rgba(6, 182, 212, 0.12);
+            border-bottom: 2px solid #06B6D4;
+        }
+    </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col bg-cyber-950 text-slate-100 selection:bg-cyber-cyan selection:text-cyber-950">
 
-  <main class="card">
-    <h1>Hello, World!</h1>
-    <p>This is a complete, self-contained HTML document featuring embedded CSS and JavaScript.</p>
-    <button id="actionBtn">Click Me</button>
-    <div class="counter-display" id="countDisplay">Clicks: 0</div>
-  </main>
+    <!-- TOP HEADER -->
+    <header class="border-b border-white/10 glass-panel sticky top-0 z-40 px-3 lg:px-4 py-2">
+        <div class="max-w-[1920px] mx-auto flex items-center justify-between gap-3">
+            <div class="flex items-center gap-4 lg:gap-6">
+                <div class="flex items-center gap-2.5 cursor-pointer">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyber-blue via-cyber-cyan to-emerald-400 flex items-center justify-center font-black text-white text-base shadow-lg shadow-cyber-cyan/20">
+                        A
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-base font-black tracking-tight text-white">APEX<span class="text-cyber-cyan">DEX</span></span>
+                        <span class="hidden sm:inline-block bg-emerald-500/10 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-500/30 font-bold tracking-wider">LIVE v4.0</span>
+                    </div>
+                </div>
 
-  <script>
-    let clicks = 0;
-    const button = document.getElementById('actionBtn');
-    const display = document.getElementById('countDisplay');
+                <nav class="flex items-center gap-1 text-xs font-medium">
+                    <button id="nav-trade" class="nav-btn active px-3 py-1.5 rounded-md flex items-center gap-1.5 font-sans">
+                        <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> Trade
+                    </button>
+                </nav>
+            </div>
 
-    button.addEventListener('click', () => {
-      clicks++;
-      display.textContent = `Clicks: ${clicks}`;
-    });
-  </script>
+            <div class="flex items-center gap-2.5">
+                <button id="walletBtn" onclick="connectWallet()" class="bg-gradient-to-r from-cyber-blue via-cyber-cyan to-emerald-500 hover:opacity-95 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg shadow-lg shadow-cyber-cyan/20 transition flex items-center gap-2">
+                    <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+                    <span id="walletBtnText">Connect Wallet</span>
+                </button>
+            </div>
+        </div>
+    </header>
 
+    <!-- REAL-TIME TICKER BAR -->
+    <section class="border-b border-white/10 bg-cyber-900/90 text-xs font-mono py-1.5 px-3 lg:px-4">
+        <div class="max-w-[1920px] mx-auto flex items-center justify-between gap-6 overflow-x-auto whitespace-nowrap">
+            <div class="flex items-center gap-4 lg:gap-5">
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-400 text-[11px] uppercase tracking-wider">Asset</span>
+                    <select id="pairSelect" onchange="switchPair(this.value)" class="bg-cyber-950 text-white font-bold border border-white/10 rounded px-2.5 py-1 text-xs focus:outline-none hover:border-cyber-cyan cursor-pointer">
+                        <option value="BTC-USD" selected>BTC / USD</option>
+                        <option value="ETH-USD">ETH / USD</option>
+                        <option value="SOL-USD">SOL / USD</option>
+                        <option value="ARB-USD">ARB / USD</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2 border-l border-white/10 pl-4">
+                    <span id="tickerPrice" class="text-sm font-extrabold text-cyber-green">Connecting...</span>
+                    <span id="tickerChange" class="text-[11px] font-bold text-cyber-green px-1.5 py-0.5 rounded bg-cyber-green/10">0.00%</span>
+                </div>
+
+                <div class="hidden xl:flex items-center gap-4 border-l border-white/10 pl-4 text-[11px] text-slate-400">
+                    <div>Mark: <span id="tickerMark" class="text-slate-200 font-semibold">—</span></div>
+                    <div>Index: <span id="tickerIndex" class="text-slate-200 font-semibold">—</span></div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5 text-[11px] text-slate-400">
+                <div>24h High: <span id="tickerHigh" class="text-slate-200 font-semibold">—</span></div>
+                <div>24h Low: <span id="tickerLow" class="text-slate-200 font-semibold">—</span></div>
+                <div>24h Vol: <span id="tickerVol" class="text-slate-200 font-semibold">—</span></div>
+                <div class="border-l border-white/10 pl-4 flex items-center gap-2">
+                    <span>Equity: <strong id="headerEquity" class="text-white">$10,000.00</strong></span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span>Stream:</span>
+                    <span id="streamStatus" class="text-cyber-green font-semibold">Connecting...</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MAIN TERMINAL -->
+    <main class="flex-1 max-w-[1920px] w-full mx-auto p-2 lg:p-3 flex flex-col">
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-2.5 flex-1">
+            
+            <!-- Chart Area (Cols 1-9) -->
+            <div class="lg:col-span-9 flex flex-col gap-2">
+                <div class="glass-panel rounded-xl px-3 py-2 flex items-center justify-between text-xs font-mono">
+                    <div class="flex items-center gap-2.5">
+                        <span id="tvSymbolLabel" class="font-bold text-white bg-cyber-900 px-2 py-1 rounded border border-white/10">BTC-USD</span>
+                        <span id="ohlcReadout" class="text-[11px] text-slate-400">O: -- H: -- L: -- C: --</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="setTimeframe('1m')" id="tf-1m" class="tf-btn active px-2 py-0.5 rounded bg-cyber-cyan text-cyber-950 font-bold text-[11px]">1m</button>
+                        <button onclick="setTimeframe('5m')" id="tf-5m" class="tf-btn px-2 py-0.5 rounded text-slate-400 hover:text-white text-[11px]">5m</button>
+                        <button onclick="setTimeframe('15m')" id="tf-15m" class="tf-btn px-2 py-0.5 rounded text-slate-400 hover:text-white text-[11px]">15m</button>
+                        <button onclick="setTimeframe('1h')" id="tf-1h" class="tf-btn px-2 py-0.5 rounded text-slate-400 hover:text-white text-[11px]">1h</button>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-xl p-2 relative flex-1 min-h-[460px] flex flex-col overflow-hidden">
+                    <div id="tvChartContainer" class="w-full h-full flex-1 relative min-h-[440px]"></div>
+                </div>
+            </div>
+
+            <!-- Order Ticket (Cols 10-12) -->
+            <div class="lg:col-span-3 flex flex-col gap-2.5 font-mono text-xs">
+                <div class="glass-panel p-3.5 rounded-xl border border-white/10 space-y-3 flex-1 flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <!-- Buy / Sell Selector -->
+                        <div class="grid grid-cols-2 gap-1.5 bg-cyber-950 p-1 rounded-lg border border-white/5 font-bold">
+                            <button id="btnOrderBuy" onclick="setOrderSide('buy')" class="py-1.5 rounded bg-cyber-green text-white text-center">BUY / LONG</button>
+                            <button id="btnOrderSell" onclick="setOrderSide('sell')" class="py-1.5 rounded text-slate-400 hover:text-white text-center">SELL / SHORT</button>
+                        </div>
+
+                        <!-- Margin Input -->
+                        <div class="glass-input p-2.5 rounded-lg space-y-1">
+                            <div class="flex justify-between text-[11px] text-slate-400">
+                                <span>Margin (USDC)</span>
+                                <span>Avail: <strong id="userBalance" class="text-white">10,000.00</strong></span>
+                            </div>
+                            <input id="marginInput" type="number" step="10" min="1" value="500" oninput="updateOrderPreview()" class="bg-transparent text-base font-bold text-white focus:outline-none w-full">
+                        </div>
+
+                        <!-- Leverage Slider -->
+                        <div class="glass-input p-2.5 rounded-lg space-y-1.5">
+                            <div class="flex justify-between text-[11px] text-slate-400">
+                                <span>Leverage</span>
+                                <span id="leverageReadout" class="text-cyber-cyan font-bold">10x</span>
+                            </div>
+                            <input id="leverageSlider" type="range" min="1" max="50" value="10" oninput="setLeverage(this.value)" class="w-full h-1.5 bg-cyber-800 rounded-lg cursor-pointer">
+                        </div>
+
+                        <!-- Risk Preview -->
+                        <div class="bg-cyber-950/90 border border-white/5 rounded-lg p-2.5 space-y-1.5 text-[11px]">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Notional Size</span>
+                                <span id="previewNotional" class="text-white font-bold">$5,000.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Est. Liquidation Price</span>
+                                <span id="previewLiqPrice" class="text-cyber-gold font-semibold">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="submitOrderBtn" onclick="executeOrder()" class="w-full bg-cyber-green hover:opacity-95 text-white font-bold py-2.5 rounded-lg shadow-md transition text-xs tracking-wider">
+                        SIMULATE MARKET ORDER
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Positions Blotter (No fake trade line) -->
+        <section class="glass-panel rounded-xl p-3 border border-white/10 font-mono text-xs mt-2.5">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
+                <span class="text-cyber-cyan font-bold">Open Positions (<span id="countPositions">0</span>)</span>
+                <button onclick="closeAllPositions()" class="text-cyber-red hover:underline text-[11px]">Close All</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-[10px] text-slate-400 uppercase border-b border-white/5">
+                            <th class="py-1.5 px-2">Market / Side</th>
+                            <th class="py-1.5 px-2">Size</th>
+                            <th class="py-1.5 px-2">Margin</th>
+                            <th class="py-1.5 px-2">Entry Price</th>
+                            <th class="py-1.5 px-2">Mark Price</th>
+                            <th class="py-1.5 px-2">Unrealized PnL</th>
+                            <th class="py-1.5 px-2 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="positionsTableBody" class="divide-y divide-white/5 text-[11px]">
+                        <tr><td colspan="7" class="py-4 text-center text-slate-500">No active positions.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Notification Toasts -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        'use strict';
+
+        const state = {
+            activePair: 'BTC-USD',
+            timeframe: '1m',
+            orderSide: 'buy',
+            leverage: 10,
+            userBalance: 10000.00,
+            prices: { 'BTC-USD': 0, 'ETH-USD': 0, 'SOL-USD': 0, 'ARB-USD': 0 },
+            candles: [],
+            positions: [], // Completely empty: No fake default trade line!
+            ws: null,
+            pollTimer: null
+        };
+
+        let chart = null;
+        let candleSeries = null;
+
+        function formatPrice(val) {
+            if (!Number.isFinite(val) || val <= 0) return '—';
+            const decimals = val < 10 ? 4 : 2;
+            return '$' + val.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+        }
+
+        function triggerToast(msg, isError = false) {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `glass-panel text-white text-xs px-4 py-2.5 rounded-xl border ${isError ? 'border-cyber-red/50 text-cyber-red' : 'border-cyber-cyan/40'} shadow-xl font-mono`;
+            toast.textContent = msg;
+            container.appendChild(toast);
+            setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3500);
+        }
+
+        // ==================== LIVE WEBSOCKET PRICE FEED ====================
+        function connectLiveFeed() {
+            if (state.ws) {
+                try { state.ws.close(); } catch(e) {}
+                state.ws = null;
+            }
+            clearInterval(state.pollTimer);
+
+            const statusEl = document.getElementById('streamStatus');
+            if (statusEl) statusEl.textContent = 'Connecting...';
+
+            try {
+                // Coinbase public WebSocket feed (globally unblocked)
+                const ws = new WebSocket('wss://ws-feed.exchange.coinbase.com');
+                state.ws = ws;
+
+                ws.onopen = () => {
+                    if (statusEl) statusEl.textContent = 'Live (Coinbase)';
+                    ws.send(JSON.stringify({
+                        type: 'subscribe',
+                        product_ids: [state.activePair],
+                        channels: ['ticker']
+                    }));
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'ticker' && data.price) {
+                            const cur = parseFloat(data.price);
+                            const high = data.high_24h ? parseFloat(data.high_24h) : null;
+                            const low = data.low_24h ? parseFloat(data.low_24h) : null;
+                            const vol = data.volume_24h ? (parseFloat(data.volume_24h) / 1000).toFixed(1) + 'K' : null;
+                            onPriceTick(cur, high, low, vol);
+                        }
+                    } catch(e) {}
+                };
+
+                ws.onerror = () => {
+                    if (statusEl) statusEl.textContent = 'Polling REST...';
+                    startFallbackPoll();
+                };
+
+                ws.onclose = () => {
+                    setTimeout(connectLiveFeed, 3000);
+                };
+            } catch(e) {
+                startFallbackPoll();
+            }
+
+            startFallbackPoll();
+        }
+
+        function startFallbackPoll() {
+            const fetchPrice = () => {
+                fetch(`https://api.coinbase.com/v2/prices/${state.activePair}/spot`)
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res?.data?.amount) {
+                            onPriceTick(parseFloat(res.data.amount));
+                        }
+                    }).catch(() => {});
+            };
+            fetchPrice();
+            state.pollTimer = setInterval(fetchPrice, 3500);
+        }
+
+        function onPriceTick(price, high, low, vol) {
+            if (!Number.isFinite(price) || price <= 0) return;
+            state.prices[state.activePair] = price;
+
+            document.getElementById('tickerPrice').textContent = formatPrice(price);
+            document.getElementById('tickerMark').textContent = formatPrice(price * 1.0001);
+            document.getElementById('tickerIndex').textContent = formatPrice(price * 0.9999);
+            if (high) document.getElementById('tickerHigh').textContent = formatPrice(high);
+            if (low) document.getElementById('tickerLow').textContent = formatPrice(low);
+            if (vol) document.getElementById('tickerVol').textContent = vol;
+
+            if (candleSeries && state.candles.length) {
+                const last = state.candles[state.candles.length - 1];
+                last.close = price;
+                last.high = Math.max(last.high, price);
+                last.low = Math.min(last.low, price);
+                candleSeries.update(last);
+            }
+
+            updateOrderPreview();
+            renderPositions();
+        }
+
+        // ==================== CLEAN CHART INITIALIZATION ====================
+        function initChart() {
+            const container = document.getElementById('tvChartContainer');
+            if (!container || typeof LightweightCharts === 'undefined') return;
+
+            container.innerHTML = '';
+            chart = LightweightCharts.createChart(container, {
+                width: container.clientWidth || 800,
+                height: container.clientHeight || 440,
+                layout: { background: { type: 'solid', color: 'transparent' }, textColor: '#94A3B8' },
+                grid: { vertLines: { color: 'rgba(255, 255, 255, 0.03)' }, horzLines: { color: 'rgba(255, 255, 255, 0.03)' } },
+                crosshair: { mode: 0 },
+                timeScale: { timeVisible: true, secondsVisible: false, borderColor: 'rgba(255, 255, 255, 0.08)' },
+                rightPriceScale: { borderColor: 'rgba(255, 255, 255, 0.08)' }
+            });
+
+            candleSeries = chart.addCandlestickSeries({
+                upColor: '#10B981',
+                downColor: '#EF4444',
+                borderVisible: false,
+                wickUpColor: '#10B981',
+                wickDownColor: '#EF4444',
+                lastValueVisible: true,
+                priceLineVisible: false // Clean: No annoying horizontal lines!
+            });
+
+            loadHistoricalCandles();
+        }
+
+        function loadHistoricalCandles() {
+            fetch(`https://api.binance.com/api/v3/klines?symbol=${state.activePair.replace('-', 'USDT')}&interval=${state.timeframe}&limit=120`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!Array.isArray(data)) throw new Error();
+                    const list = data.map(d => ({
+                        time: Math.floor(d[0] / 1000),
+                        open: parseFloat(d[1]),
+                        high: parseFloat(d[2]),
+                        low: parseFloat(d[3]),
+                        close: parseFloat(d[4])
+                    }));
+                    state.candles = list;
+                    candleSeries.setData(list);
+                    chart.timeScale().fitContent();
+                    if (list.length) onPriceTick(list[list.length - 1].close);
+                })
+                .catch(() => {
+                    fetch(`https://api.coinbase.com/v2/prices/${state.activePair}/spot`)
+                        .then(r => r.json())
+                        .then(res => {
+                            const p = parseFloat(res?.data?.amount) || 84000;
+                            const seed = [];
+                            const now = Math.floor(Date.now() / 1000);
+                            for (let i = 60; i >= 0; i--) {
+                                seed.push({ time: now - (i * 60), open: p, high: p * 1.001, low: p * 0.999, close: p });
+                            }
+                            state.candles = seed;
+                            candleSeries.setData(seed);
+                            chart.timeScale().fitContent();
+                            onPriceTick(p);
+                        });
+                });
+        }
+
+        // ==================== ORDER TICKET & POSITIONS ====================
+        function setOrderSide(side) {
+            state.orderSide = side;
+            const buyBtn = document.getElementById('btnOrderBuy');
+            const sellBtn = document.getElementById('btnOrderSell');
+            const submitBtn = document.getElementById('submitOrderBtn');
+
+            if (side === 'buy') {
+                buyBtn.className = 'py-1.5 rounded bg-cyber-green text-white text-center';
+                sellBtn.className = 'py-1.5 rounded text-slate-400 hover:text-white text-center';
+                submitBtn.className = 'w-full bg-cyber-green hover:opacity-95 text-white font-bold py-2.5 rounded-lg shadow-md transition text-xs tracking-wider';
+            } else {
+                sellBtn.className = 'py-1.5 rounded bg-cyber-red text-white text-center';
+                buyBtn.className = 'py-1.5 rounded text-slate-400 hover:text-white text-center';
+                submitBtn.className = 'w-full bg-cyber-red hover:opacity-95 text-white font-bold py-2.5 rounded-lg shadow-md transition text-xs tracking-wider';
+            }
+            updateOrderPreview();
+        }
+
+        function setLeverage(val) {
+            state.leverage = parseInt(val, 10) || 10;
+            document.getElementById('leverageReadout').textContent = `${state.leverage}x`;
+            updateOrderPreview();
+        }
+
+        function updateOrderPreview() {
+            const margin = parseFloat(document.getElementById('marginInput')?.value) || 0;
+            const notional = margin * state.leverage;
+            const cur = state.prices[state.activePair] || 0;
+            const liq = cur > 0
+                ? (state.orderSide === 'buy' ? cur * (1 - (1 / state.leverage)) : cur * (1 + (1 / state.leverage)))
+                : 0;
+
+            document.getElementById('previewNotional').textContent = formatPrice(notional);
+            document.getElementById('previewLiqPrice').textContent = formatPrice(liq);
+        }
+
+        function executeOrder() {
+            const margin = parseFloat(document.getElementById('marginInput')?.value) || 0;
+            if (margin <= 0 || margin > state.userBalance) {
+                triggerToast('Invalid or insufficient margin amount', true);
+                return;
+            }
+
+            const price = state.prices[state.activePair];
+            if (!price || price <= 0) {
+                triggerToast('Waiting for live price stream...', true);
+                return;
+            }
+
+            state.userBalance -= margin;
+            document.getElementById('userBalance').textContent = state.userBalance.toFixed(2);
+
+            const pos = {
+                id: `pos-${Date.now()}`,
+                pair: state.activePair,
+                side: state.orderSide,
+                margin: margin,
+                leverage: state.leverage,
+                notional: margin * state.leverage,
+                entryPrice: price
+            };
+
+            state.positions.unshift(pos);
+            renderPositions();
+            triggerToast(`Order placed: ${state.orderSide.toUpperCase()} ${state.activePair}`);
+        }
+
+        function renderPositions() {
+            const tbody = document.getElementById('positionsTableBody');
+            const countEl = document.getElementById('countPositions');
+            if (!tbody) return;
+
+            if (countEl) countEl.textContent = state.positions.length;
+            tbody.innerHTML = '';
+
+            if (state.positions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-4 text-center text-slate-500">No active positions.</td></tr>';
+                return;
+            }
+
+            state.positions.forEach(pos => {
+                const mark = state.prices[pos.pair] || pos.entryPrice;
+                const diff = (mark - pos.entryPrice) / pos.entryPrice;
+                const pnl = pos.side === 'buy' ? pos.notional * diff : pos.notional * (-diff);
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-white/5 transition';
+                tr.innerHTML = `
+                    <td class="py-2 px-2 font-bold ${pos.side === 'buy' ? 'text-cyber-green' : 'text-cyber-red'}">
+                        ${pos.side.toUpperCase()} ${pos.leverage}x ${pos.pair}
+                    </td>
+                    <td class="py-2 px-2 text-white">${formatPrice(pos.notional)}</td>
+                    <td class="py-2 px-2 text-slate-300">$${pos.margin.toFixed(2)}</td>
+                    <td class="py-2 px-2 text-slate-300">${formatPrice(pos.entryPrice)}</td>
+                    <td class="py-2 px-2 text-white font-semibold">${formatPrice(mark)}</td>
+                    <td class="py-2 px-2 font-bold ${pnl >= 0 ? 'text-cyber-green' : 'text-cyber-red'}">
+                        ${pnl >= 0 ? '+$' : '-$'}${Math.abs(pnl).toFixed(2)}
+                    </td>
+                    <td class="py-2 px-2 text-right">
+                        <button onclick="closePosition('${pos.id}')" class="bg-cyber-red/20 text-cyber-red hover:bg-cyber-red/30 px-2 py-1 rounded text-[10px] transition font-bold">Close</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function closePosition(id) {
+            const idx = state.positions.findIndex(p => p.id === id);
+            if (idx === -1) return;
+            const pos = state.positions[idx];
+            const mark = state.prices[pos.pair] || pos.entryPrice;
+            const diff = (mark - pos.entryPrice) / pos.entryPrice;
+            const pnl = pos.side === 'buy' ? pos.notional * diff : pos.notional * (-diff);
+
+            state.userBalance += Math.max(0, pos.margin + pnl);
+            document.getElementById('userBalance').textContent = state.userBalance.toFixed(2);
+            state.positions.splice(idx, 1);
+            renderPositions();
+            triggerToast('Position Closed');
+        }
+
+        function closeAllPositions() {
+            state.positions.slice().forEach(p => closePosition(p.id));
+        }
+
+        function switchPair(pair) {
+            state.activePair = pair;
+            document.getElementById('tvSymbolLabel').textContent = pair;
+            connectLiveFeed();
+            loadHistoricalCandles();
+        }
+
+        function setTimeframe(tf) {
+            state.timeframe = tf;
+            document.querySelectorAll('.tf-btn').forEach(b => {
+                b.className = 'tf-btn px-2 py-0.5 rounded text-slate-400 hover:text-white text-[11px]';
+            });
+            document.getElementById(`tf-${tf}`).className = 'tf-btn active px-2 py-0.5 rounded bg-cyber-cyan text-cyber-950 font-bold text-[11px]';
+            loadHistoricalCandles();
+        }
+
+        function connectWallet() {
+            triggerToast('Institutional Sandbox Wallet Connected (10,000 USDC)');
+        }
+
+        window.onload = () => {
+            if (window.lucide) lucide.createIcons();
+            initChart();
+            connectLiveFeed();
+            window.addEventListener('resize', () => {
+                if (chart) chart.resize(document.getElementById('tvChartContainer').clientWidth, 440);
+            });
+        };
+    </script>
 </body>
 </html>
